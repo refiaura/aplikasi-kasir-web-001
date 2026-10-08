@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+/*
+ * Token desain "toko yang rapi" (lihat PRD).
+ * Light dan dark didefinisikan sebagai CSS variables; Tailwind memakainya
+ * lewat @theme inline di bawah.
+ */
+:root {
+  --pandan-600: #1f6f5c;
+  --pandan-700: #165546;
+  --pandan-50: #e7f2ee;
+  --kunyit-500: #e3a23b;
+  --kunyit-50: #fcf3e3;
+  --cabai-600: #c2412d;
+  --kertas: #f7f5f0;
+  --surface: #ffffff;
+  --garis: #e4e0d6;
+  --tinta: #1f201c;
+  --tinta-muted: #6b6a62;
+  /* Aksi utama: teks terang di atas pandan-600 (kontras lolos AA). */
+  --aksi: #1f6f5c;
+  --aksi-hover: #165546;
+  --aksi-text: #ffffff;
+  --bahaya: #c2412d;
+  --bahaya-text: #ffffff;
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  --pandan-600: #4fb39a;
+  --pandan-700: #6cc7af;
+  --pandan-50: #16302a;
+  --kunyit-500: #f0b85c;
+  --kunyit-50: #33280f;
+  --cabai-600: #f07a64;
+  --kertas: #121412;
+  --surface: #1b1e1b;
+  --garis: #2c302c;
+  --tinta: #ecebe6;
+  --tinta-muted: #a3a29a;
+  /* Di tema gelap, teks aksi memakai tinta gelap di atas pandan terang. */
+  --aksi: #4fb39a;
+  --aksi-hover: #6cc7af;
+  --aksi-text: #121412;
+  --bahaya: #f07a64;
+  --bahaya-text: #1f201c;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-pandan-600: var(--pandan-600);
+  --color-pandan-700: var(--pandan-700);
+  --color-pandan-50: var(--pandan-50);
+  --color-kunyit-500: var(--kunyit-500);
+  --color-kunyit-50: var(--kunyit-50);
+  --color-cabai-600: var(--cabai-600);
+  --color-kertas: var(--kertas);
+  --color-surface: var(--surface);
+  --color-garis: var(--garis);
+  --color-tinta: var(--tinta);
+  --color-tinta-muted: var(--tinta-muted);
+  --color-aksi: var(--aksi);
+  --color-aksi-hover: var(--aksi-hover);
+  --color-aksi-text: var(--aksi-text);
+  --color-bahaya: var(--bahaya);
+  --color-bahaya-text: var(--bahaya-text);
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body {
+  @apply bg-kertas text-tinta font-sans antialiased;
+}
+
+/* Animasi 150–200ms ease-out sesuai PRD (tanpa animasi di layar laporan). */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes sheet-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.anim-fade-in { animation: fade-in 150ms ease-out; }
+.anim-slide-up { animation: slide-up 200ms ease-out; }
+.anim-sheet-up { animation: sheet-up 200ms ease-out; }
+
+/* Skeleton loading (bukan spinner). */
+.skeleton {
+  @apply bg-garis/60 rounded-[10px] animate-pulse;
+}

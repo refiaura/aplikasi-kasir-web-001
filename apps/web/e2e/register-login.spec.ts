@@ -1,0 +1,43 @@
+import { expect, test } from '@playwright/test';
+
+/** Alur Fase 1: pemilik daftar → dashboard kosong → perangkat → kasir → login PIN. */
+test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
+  const email = `e2e-${Date.now()}@toko.id`;
+
+  // 1. Daftar sebagai pemilik.
+  await page.goto('/daftar');
+  await page.getByLabel('Nama kamu').fill('Pemilik E2E');
+  await page.getByLabel('Nama toko').fill('Toko E2E');
+  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Kata sandi').fill('rahasia123');
+  await page.getByRole('button', { name: 'Daftar' }).click();
+  await expect(page).toHaveURL('/');
+
+  // 2. Dashboard kosong tampil.
+  await expect(page.getByText('Toko E2E')).toBeVisible();
+  await expect(page.getByText('Belum ada transaksi hari ini.')).toBeVisible();
+
+  // 3. Daftarkan perangkat + buat akun kasir.
+  await page.getByRole('link', { name: 'Perangkat' }).click();
+  await page.getByLabel('Kode perangkat').fill('KASIR-E2E');
+  await page.getByLabel('Nama perangkat').fill('Tablet E2E');
+  await page.getByRole('button', { name: 'Daftarkan' }).click();
+  await expect(page.getByText('KASIR-E2E')).toBeVisible();
+
+  await page.getByLabel('Nama kasir').fill('Kasir E2E');
+  await page.getByLabel('PIN (6 digit)').fill('123456');
+  await page.getByRole('button', { name: 'Buat akun' }).click();
+  await expect(page.getByText('Kasir E2E')).toBeVisible();
+
+  // 4. Keluar, lalu masuk sebagai kasir via PIN.
+  await page.getByRole('button', { name: 'Keluar' }).click();
+  await expect(page).toHaveURL('/login');
+  await page.goto('/pin');
+  await page.getByLabel('Kode perangkat').fill('KASIR-E2E');
+  for (const d of '123456') {
+    await page.getByRole('button', { name: d, exact: true }).click();
+  }
+  await page.getByRole('button', { name: 'Masuk' }).click();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByText('Kasir E2E')).toBeVisible();
+});

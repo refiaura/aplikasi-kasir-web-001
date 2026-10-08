@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kasir
+          POSTGRES_PASSWORD: kasir
+          POSTGRES_DB: kasir_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://kasir:kasir@localhost:5432/kasir_test
+      SESSION_SECRET: ci-test-secret-minimal-32-karakter-ya
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependensi
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Migrasi database test
+        run: pnpm db:migrate
+
+      - name: Test API
+        run: pnpm --filter @kasir/api test
+
+      - name: Test Web
+        run: pnpm --filter @kasir/web test
+
+      - name: Build
+        run: pnpm build

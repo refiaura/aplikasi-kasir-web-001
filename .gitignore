@@ -1,0 +1,13 @@
+node_modules/
+dist/
+build/
+coverage/
+.env
+.env.*
+!.env.example
+*.local
+.turbo/
+apps/web/src/routeTree.gen.ts
+playwright-report/
+test-results/
+.DS_Store

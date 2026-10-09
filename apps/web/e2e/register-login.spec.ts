@@ -16,7 +16,8 @@ test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
 
   // 2. Dashboard kosong tampil.
   await expect(page.getByText('Toko E2E')).toBeVisible();
-  await expect(page.getByText('Belum ada transaksi hari ini.')).toBeVisible();
+  await expect(page.getByText('Omzet hari ini')).toBeVisible();
+  await expect(page.getByText('Omzet 7 hari terakhir')).toBeVisible();
 
   // 3. Daftarkan perangkat + buat akun kasir.
   await page.getByRole('link', { name: 'Perangkat' }).click();

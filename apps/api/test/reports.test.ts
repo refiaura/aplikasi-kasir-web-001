@@ -81,10 +81,10 @@ describe('laporan', () => {
     app = await buildTestApp();
     const { cookie, ownerCookie } = await setupCashier(app);
     const a = await buatProduk(ownerCookie, 'Laris A', 5000, 2000);
-    const b = await buatProduk(ownerCookie, 'Sepi B', 50000, 30000);
+    const b = await buatProduk(ownerCookie, 'Sepi B', 40000, 30000);
 
     await jual(cookie, a.id, 10, 5000); // omzet 50000
-    await jual(cookie, b.id, 1, 50000); // omzet 50000
+    await jual(cookie, b.id, 1, 40000); // omzet 40000
 
     const top = await app.inject({
       method: 'GET',
@@ -100,7 +100,7 @@ describe('laporan', () => {
       headers: { cookie: ownerCookie },
     });
     expect(cs.json().cashiers).toHaveLength(1);
-    expect(cs.json().cashiers[0].omzet).toBe(100000);
+    expect(cs.json().cashiers[0].omzet).toBe(90000);
     expect(cs.json().cashiers[0].transaksi).toBe(2);
   });
 

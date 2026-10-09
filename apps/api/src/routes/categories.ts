@@ -79,7 +79,7 @@ export async function categoryRoutes(app: FastifyInstance) {
     const [updated] = await database
       .update(categories)
       .set({ ...(parsed.data.name ? { name: parsed.data.name } : {}), ...(parsed.data.sortOrder !== undefined ? { sortOrder: parsed.data.sortOrder } : {}), updatedAt: new Date() })
-      .where(eq(categories.id, id))
+      .where(and(eq(categories.id, id), eq(categories.storeId, storeId)))
       .returning(selectCols);
     return reply.send({ category: updated });
   });
@@ -105,7 +105,7 @@ export async function categoryRoutes(app: FastifyInstance) {
       return err.conflict(reply, 'Kategori masih dipakai produk. Pindahkan dulu produknya.');
     }
 
-    await database.delete(categories).where(eq(categories.id, id));
+    await database.delete(categories).where(and(eq(categories.id, id), eq(categories.storeId, storeId)));
     await database.insert(auditLogs).values({
       storeId,
       userId: req.sessionUser!.userId,

@@ -34,6 +34,7 @@ test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
   await page.getByRole('button', { name: 'Keluar' }).click();
   await expect(page).toHaveURL('/login');
   await page.goto('/pin');
+  await expect(page).toHaveURL('/pin', { timeout: 10000 });
   await page.getByLabel('Kode perangkat').fill(deviceCode);
   for (const d of '123456') {
     await page.getByRole('button', { name: d, exact: true }).click();

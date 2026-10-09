@@ -1,4 +1,5 @@
 import cookie from '@fastify/cookie';
+import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import Fastify from 'fastify';
@@ -11,6 +12,8 @@ import { categoryRoutes } from './routes/categories.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 import { deviceRoutes } from './routes/devices.js';
 import { productRoutes } from './routes/products.js';
+import { saleRoutes } from './routes/sales.js';
+import { shiftRoutes } from './routes/shifts.js';
 import { stockRoutes } from './routes/stock.js';
 import { uploadRoutes } from './routes/uploads.js';
 import { userRoutes } from './routes/users.js';
@@ -31,6 +34,15 @@ export function buildApp(opts?: BuildAppOptions) {
   app.register(cookie);
   app.register(multipart, { limits: { fileSize: 3 * 1024 * 1024, files: 1 } });
 
+  // CORS hanya bila CORS_ORIGIN diisi (mis. e2E CI: web dan api beda origin).
+  // Di docker production, web di-serve nginx yang memproksi /api → tak perlu.
+  if (config.corsOrigin) {
+    app.register(cors, {
+      origin: config.corsOrigin.split(',').map((s) => s.trim()),
+      credentials: true,
+    });
+  }
+
   // Foto produk diserve statis dari direktori upload.
   mkdirSync(config.uploadDir, { recursive: true });
   app.register(fastifyStatic, { root: config.uploadDir, prefix: '/uploads/' });
@@ -50,6 +62,8 @@ export function buildApp(opts?: BuildAppOptions) {
       await api.register(categoryRoutes);
       await api.register(productRoutes);
       await api.register(stockRoutes);
+      await api.register(shiftRoutes);
+      await api.register(saleRoutes);
       await api.register(uploadRoutes);
       await api.register(dashboardRoutes);
     },

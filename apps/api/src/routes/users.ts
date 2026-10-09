@@ -1,5 +1,5 @@
-import { cashierCreateSchema } from '@kasir/shared';
-import { eq } from 'drizzle-orm';
+import { cashierCreateSchema, cashierPermissionsSchema } from '@kasir/shared';
+import { and, eq } from 'drizzle-orm';
 import type { FastifyInstance } from 'fastify';
 import { auditLogs, users } from '../db/schema.js';
 import { err } from '../lib/errors.js';
@@ -33,7 +33,7 @@ export async function userRoutes(app: FastifyInstance) {
     }
     const database = req.server.db;
     const storeId = req.sessionUser!.storeId;
-    const { name, pin, phone } = parsed.data;
+    const { name, pin, phone, permissions } = parsed.data;
 
     const pinHash = await hashSecret(pin);
     const [user] = await database
@@ -44,7 +44,11 @@ export async function userRoutes(app: FastifyInstance) {
         phone: phone ?? null,
         pinHash,
         role: 'cashier',
-        permissions: { discount: false, void: false, reports: false },
+        permissions: {
+          discount: permissions?.discount ?? false,
+          void: permissions?.void ?? false,
+          reports: permissions?.reports ?? false,
+        },
       })
       .returning({
         id: users.id,
@@ -60,5 +64,34 @@ export async function userRoutes(app: FastifyInstance) {
       payload: { createdUserId: user!.id, role: 'cashier', name },
     });
     return reply.code(201).send({ user });
+  });
+
+  /** Ubah hak akses kasir (mis. izin diskon). */
+  app.patch('/users/:id/permissions', { preHandler: requireOwner }, async (req, reply) => {
+    const parsed = cashierPermissionsSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return err.badRequest(reply, parsed.error.issues[0]?.message ?? 'Data tidak valid.');
+    }
+    const database = req.server.db;
+    const storeId = req.sessionUser!.storeId;
+    const { id } = req.params as { id: string };
+
+    const [target] = await database
+      .select({ id: users.id, role: users.role, permissions: users.permissions })
+      .from(users)
+      .where(and(eq(users.id, id), eq(users.storeId, storeId)))
+      .limit(1);
+    if (!target || target.role !== 'cashier') {
+      return err.notFound(reply, 'Kasir tidak ditemukan.');
+    }
+    const merged = { discount: false, void: false, reports: false, ...(target.permissions ?? {}), ...parsed.data };
+    await database.update(users).set({ permissions: merged }).where(eq(users.id, id));
+    await database.insert(auditLogs).values({
+      storeId,
+      userId: req.sessionUser!.userId,
+      action: 'user.permissions_updated',
+      payload: { userId: id, permissions: merged },
+    });
+    return reply.send({ ok: true, permissions: merged });
   });
 }

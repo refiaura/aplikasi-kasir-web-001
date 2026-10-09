@@ -10,6 +10,8 @@ export const config = {
   nodeEnv: process.env.NODE_ENV ?? 'development',
   /** Direktori penyimpanan foto produk; selalu absolut (D15 di docs/DECISIONS.md). */
   uploadDir: resolve(process.env.UPLOAD_DIR ?? 'uploads'),
+  /** Origin yang diizinkan CORS, dipisah koma. Kosong = CORS mati. */
+  corsOrigin: process.env.CORS_ORIGIN ?? '',
 } as const;
 
 if (config.nodeEnv === 'production' && config.sessionSecret.length < 32) {

@@ -158,7 +158,7 @@ export async function authRoutes(app: FastifyInstance) {
       .set({ lastSeenAt: new Date() })
       .where(eq(devices.id, matched.device.id));
 
-    const sessionId = await createSession(database, matched.user.id, matched.user.storeId, 'cashier');
+    const sessionId = await createSession(database, matched.user.id, matched.user.storeId, 'cashier', matched.device.id);
     setSessionCookie(reply, sessionId);
     await database.insert(auditLogs).values({
       storeId: matched.user.storeId,

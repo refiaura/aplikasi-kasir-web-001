@@ -14,6 +14,8 @@ export interface SessionData {
   email: string | null;
   role: 'owner' | 'cashier';
   permissions: Record<string, boolean>;
+  /** ID perangkat untuk sesi kasir; null untuk pemilik. */
+  deviceId: string | null;
 }
 
 export async function createSession(
@@ -21,11 +23,12 @@ export async function createSession(
   userId: string,
   storeId: string,
   role: 'owner' | 'cashier',
+  deviceId?: string | null,
 ): Promise<string> {
   const expiresAt = new Date(Date.now() + config.sessionTtlMs);
   const [row] = await database
     .insert(sessions)
-    .values({ userId, storeId, role, expiresAt })
+    .values({ userId, storeId, role, deviceId: deviceId ?? null, expiresAt })
     .returning({ id: sessions.id });
   if (!row) throw new Error('Gagal membuat sesi.');
   return row.id;
@@ -45,6 +48,7 @@ export async function getSession(
       role: users.role,
       permissions: users.permissions,
       isActive: users.isActive,
+      deviceId: sessions.deviceId,
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))
@@ -59,6 +63,7 @@ export async function getSession(
     email: row.email,
     role: row.role,
     permissions: row.permissions ?? {},
+    deviceId: row.deviceId,
   };
 }
 

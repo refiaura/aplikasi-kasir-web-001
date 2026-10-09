@@ -7,6 +7,7 @@ import { expect, request, test } from '@playwright/test';
 test('kasir berjualan tunai dalam satu shift', async ({ page }) => {
   const api = await request.newContext({ baseURL: 'http://localhost:8080' });
   const email = `kasir-e2e-${Date.now()}@toko.id`;
+  const deviceCode = `KASIR-E2E-${Date.now()}`;
 
   // 1. Daftar pemilik + buat perangkat, kasir, dan produk contoh.
   const reg = await api.post('/api/v1/auth/register', {
@@ -17,7 +18,7 @@ test('kasir berjualan tunai dalam satu shift', async ({ page }) => {
 
   await api.post('/api/v1/devices', {
     headers: { cookie: ownerCookie },
-    data: { code: 'KASIR-E2E-3', name: 'Tablet E2E' },
+    data: { code: deviceCode, name: 'Tablet E2E' },
   });
   await api.post('/api/v1/users', {
     headers: { cookie: ownerCookie },
@@ -32,7 +33,7 @@ test('kasir berjualan tunai dalam satu shift', async ({ page }) => {
 
   // 2. Masuk sebagai kasir via PIN.
   await page.goto('/pin');
-  await page.getByLabel('Kode perangkat').fill('KASIR-E2E-3');
+  await page.getByLabel('Kode perangkat').fill(deviceCode);
   for (const d of '123456') {
     await page.getByRole('button', { name: d, exact: true }).click();
   }
@@ -45,7 +46,7 @@ test('kasir berjualan tunai dalam satu shift', async ({ page }) => {
   await page.getByRole('button', { name: 'Buka shift' }).click();
   await page.getByLabel('Kas awal di laci (Rp)').fill('100000');
   await page.getByRole('button', { name: 'Buka shift', exact: true }).last().click();
-  await expect(page.getByText('Shift dibuka')).toBeVisible();
+  await expect(page.getByText('Shift dibuka', { exact: true })).toBeVisible();
 
   // 4. Tambah produk ke keranjang lalu bayar tunai uang pas.
   await page.getByRole('button', { name: /Indomie Goreng/ }).click();

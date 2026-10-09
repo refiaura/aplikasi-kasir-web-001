@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 /** Alur Fase 1: pemilik daftar → dashboard kosong → perangkat → kasir → login PIN. */
 test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
   const email = `e2e-${Date.now()}@toko.id`;
+  const deviceCode = `KASIR-E2E-${Date.now()}`;
 
   // 1. Daftar sebagai pemilik.
   await page.goto('/daftar');
@@ -19,10 +20,10 @@ test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
 
   // 3. Daftarkan perangkat + buat akun kasir.
   await page.getByRole('link', { name: 'Perangkat' }).click();
-  await page.getByLabel('Kode perangkat').fill('KASIR-E2E');
+  await page.getByLabel('Kode perangkat').fill(deviceCode);
   await page.getByLabel('Nama perangkat').fill('Tablet E2E');
   await page.getByRole('button', { name: 'Daftarkan' }).click();
-  await expect(page.getByText('KASIR-E2E')).toBeVisible();
+  await expect(page.getByText(deviceCode)).toBeVisible();
 
   await page.getByLabel('Nama kasir').fill('Kasir E2E');
   await page.getByLabel('PIN (6 digit)').fill('123456');
@@ -33,7 +34,7 @@ test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
   await page.getByRole('button', { name: 'Keluar' }).click();
   await expect(page).toHaveURL('/login');
   await page.goto('/pin');
-  await page.getByLabel('Kode perangkat').fill('KASIR-E2E');
+  await page.getByLabel('Kode perangkat').fill(deviceCode);
   for (const d of '123456') {
     await page.getByRole('button', { name: d, exact: true }).click();
   }

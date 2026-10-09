@@ -42,3 +42,61 @@ export async function registerOwner(app: FastifyInstance, overrides: OwnerOverri
   });
   return { res, cookie: sessionCookie(res), body: res.json() as MeResponse };
 }
+
+interface CashierSetup {
+  cookie: string;
+  ownerCookie: string;
+  storeId: string;
+  deviceId: string;
+  shiftId: string;
+  userId: string;
+}
+
+/**
+ * Siapkan kasir lengkap: perangkat + akun kasir + login PIN + buka shift.
+ * Kembalikan cookie kasir dan info shift.
+ */
+export async function setupCashier(
+  app: FastifyInstance,
+  opts: { pin?: string; permissions?: Record<string, boolean>; openingCash?: number; ownerEmail?: string } = {},
+): Promise<CashierSetup> {
+  const { cookie: ownerCookie, body } = await registerOwner(app, opts.ownerEmail ? { email: opts.ownerEmail } : {});
+  const storeId = (body as unknown as { store: { id: string } }).store.id;
+  const pin = opts.pin ?? '123456';
+
+  const deviceCode = `KASIR-${counter}`;
+  const deviceRes = await app.inject({
+    method: 'POST',
+    url: '/api/v1/devices',
+    headers: { cookie: ownerCookie },
+    payload: { code: deviceCode, name: 'Tablet Kasir' },
+  });
+  const deviceId = (deviceRes.json().device as { id: string }).id;
+
+  const userRes = await app.inject({
+    method: 'POST',
+    url: '/api/v1/users',
+    headers: { cookie: ownerCookie },
+    payload: { name: 'Kasir Satu', pin, permissions: opts.permissions ?? {} },
+  });
+  const userId = (userRes.json().user as { id: string }).id;
+
+  const pinRes = await app.inject({
+    method: 'POST',
+    url: '/api/v1/auth/pin',
+    payload: { deviceCode, pin },
+  });
+  const cookie = sessionCookie(pinRes);
+
+  const shiftRes = await app.inject({
+    method: 'POST',
+    url: '/api/v1/shifts/open',
+    headers: { cookie },
+    payload: { openingCash: opts.openingCash ?? 100000 },
+  });
+  if (shiftRes.statusCode !== 201) {
+    throw new Error(`Gagal buka shift di test: ${shiftRes.statusCode} ${shiftRes.body}`);
+  }
+  const shiftId = (shiftRes.json().shift as { id: string }).id;
+  return { cookie, ownerCookie, storeId, deviceId, shiftId, userId };
+}

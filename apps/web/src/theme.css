@@ -10,6 +10,7 @@
   --pandan-700: #165546;
   --pandan-50: #e7f2ee;
   --kunyit-500: #e3a23b;
+  --kunyit-700: #a86e14;
   --kunyit-50: #fcf3e3;
   --cabai-600: #c2412d;
   --kertas: #f7f5f0;
@@ -31,6 +32,7 @@
   --pandan-700: #6cc7af;
   --pandan-50: #16302a;
   --kunyit-500: #f0b85c;
+  --kunyit-700: #f5c876;
   --kunyit-50: #33280f;
   --cabai-600: #f07a64;
   --kertas: #121412;
@@ -52,6 +54,7 @@
   --color-pandan-700: var(--pandan-700);
   --color-pandan-50: var(--pandan-50);
   --color-kunyit-500: var(--kunyit-500);
+  --color-kunyit-700: var(--kunyit-700);
   --color-kunyit-50: var(--kunyit-50);
   --color-cabai-600: var(--cabai-600);
   --color-kertas: var(--kertas);

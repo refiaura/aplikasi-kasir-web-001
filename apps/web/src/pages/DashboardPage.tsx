@@ -33,7 +33,7 @@ function WeeklyChart({ weekly }: { weekly: DashboardSummary['weekly'] }) {
       {days.map((d) => (
         <div key={d.date} className="flex flex-1 flex-col items-center gap-1" title={`${d.date}: ${formatRupiah(d.omzet)}`}>
           <div
-            className="w-full rounded-t-[6px] bg-pandan-500"
+            className="w-full rounded-t-[6px] bg-pandan-600"
             style={{ height: `${Math.max(4, (d.omzet / max) * 120)}px` }}
           />
           <span className="text-xs text-tinta-muted">{d.label}</span>

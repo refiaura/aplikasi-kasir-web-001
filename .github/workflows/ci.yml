@@ -40,6 +40,9 @@ jobs:
       - name: Install dependensi
         run: pnpm install --frozen-lockfile
 
+      - name: Build @kasir/shared
+        run: pnpm --filter @kasir/shared build
+
       - name: Lint
         run: pnpm lint
 
@@ -90,6 +93,9 @@ jobs:
 
       - name: Install dependensi
         run: pnpm install --frozen-lockfile
+
+      - name: Build @kasir/shared
+        run: pnpm --filter @kasir/shared build
 
       - name: Install browser Playwright
         run: pnpm --filter @kasir/web exec playwright install chromium --with-deps

@@ -10,7 +10,7 @@ test('pemilik daftar, lalu kasir bisa masuk dengan PIN', async ({ page }) => {
   await page.getByLabel('Nama kamu').fill('Pemilik E2E');
   await page.getByLabel('Nama toko').fill('Toko E2E');
   await page.getByLabel('Email').fill(email);
-  await page.getByLabel('Kata sandi').fill('rahasia123');
+  await page.getByLabel('Kata sandi', { exact: true }).fill('rahasia123');
   await page.getByRole('button', { name: 'Daftar' }).click();
   await expect(page).toHaveURL('/');
 

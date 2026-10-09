@@ -1,3 +1,5 @@
+import { resolve } from 'node:path';
+
 export const config = {
   port: Number(process.env.PORT ?? 8080),
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://kasir:kasir@localhost:5432/kasir',
@@ -6,6 +8,8 @@ export const config = {
   sessionTtlMs: 12 * 60 * 60 * 1000,
   cookieSecure: process.env.COOKIE_SECURE === 'true',
   nodeEnv: process.env.NODE_ENV ?? 'development',
+  /** Direktori penyimpanan foto produk; selalu absolut (D15 di docs/DECISIONS.md). */
+  uploadDir: resolve(process.env.UPLOAD_DIR ?? 'uploads'),
 } as const;
 
 if (config.nodeEnv === 'production' && config.sessionSecret.length < 32) {

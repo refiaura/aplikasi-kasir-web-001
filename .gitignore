@@ -10,4 +10,5 @@ coverage/
 apps/web/src/routeTree.gen.ts
 playwright-report/
 test-results/
+uploads/
 .DS_Store

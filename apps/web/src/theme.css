@@ -95,3 +95,28 @@ body {
 .skeleton {
   @apply bg-garis/60 rounded-[10px] animate-pulse;
 }
+
+/* Struk 58mm: hanya struk yang tercetak. */
+.receipt-58 {
+  width: 58mm;
+  max-width: 100%;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .receipt-58,
+  .receipt-58 * {
+    visibility: visible;
+  }
+  .receipt-58 {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 58mm;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

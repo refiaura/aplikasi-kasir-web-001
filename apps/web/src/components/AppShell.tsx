@@ -31,6 +31,14 @@ export function AppShell({ children }: { children: ReactNode }) {
               >
                 Dashboard
               </Link>
+              {user?.role === 'cashier' ? (
+                <Link
+                  to="/kasir"
+                  className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
+                >
+                  Kasir
+                </Link>
+              ) : null}
               {user?.role === 'owner' ? (
                 <>
                   <Link

@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell';
 import { GuestOnly, RequireAuth } from './components/guards';
 import { ToastProvider } from './components/ui/Toast';
 import { DashboardPage } from './pages/DashboardPage';
+import { KasirPage } from './pages/KasirPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { DevicesPage } from './pages/DevicesPage';
 import { LoginPage } from './pages/LoginPage';
@@ -92,12 +93,25 @@ const productsRoute = createRoute({
   ),
 });
 
+const kasirRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/kasir',
+  component: () => (
+    <RequireAuth roles={['cashier']}>
+      <AppShell>
+        <KasirPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
   pinRoute,
   productsRoute,
+  kasirRoute,
   devicesRoute,
 ]);
 

@@ -253,6 +253,7 @@ export const sales = pgTable(
     cashierId: uuid('cashier_id')
       .notNull()
       .references(() => users.id),
+    customerId: uuid('customer_id').references(() => customers.id),
     subtotal: bigint('subtotal', { mode: 'number' }).notNull(),
     discount: bigint('discount', { mode: 'number' }).default(0).notNull(),
     total: bigint('total', { mode: 'number' }).notNull(),
@@ -316,4 +317,38 @@ export const receiptCounters = pgTable(
     lastNo: integer('last_no').default(0).notNull(),
   },
   (t) => [unique('receipt_counters_store_date_unique').on(t.storeId, t.date)],
+);
+
+export const customers = pgTable(
+  'customers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id')
+      .notNull()
+      .references(() => stores.id),
+    name: text('name').notNull(),
+    phone: text('phone'),
+    kasbonBalance: bigint('kasbon_balance', { mode: 'number' }).default(0).notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('customers_store_name_idx').on(t.storeId, t.name)],
+);
+
+export const kasbonEntries = pgTable(
+  'kasbon_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id')
+      .notNull()
+      .references(() => stores.id),
+    customerId: uuid('customer_id')
+      .notNull()
+      .references(() => customers.id),
+    saleId: uuid('sale_id').references(() => sales.id),
+    /** + hutang, - pembayaran. */
+    amount: bigint('amount', { mode: 'number' }).notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [index('kasbon_entries_customer_created_idx').on(t.customerId, t.createdAt)],
 );

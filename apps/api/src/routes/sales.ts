@@ -1,6 +1,7 @@
 import {
   saleBatchSchema,
   saleCreateSchema,
+  saleVoidSchema,
   type Sale,
   type SaleCreateInput,
 } from '@kasir/shared';
@@ -8,6 +9,9 @@ import { and, count, desc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import {
   auditLogs,
+  cashMovements,
+  customers,
+  kasbonEntries,
   payments,
   products,
   saleItems,
@@ -78,6 +82,7 @@ interface SaleRow {
   total: number;
   cashierName: string | null;
   soldAt: Date;
+  status: string;
 }
 
 async function saleDto(database: FastifyInstance['db'], row: SaleRow): Promise<Sale> {
@@ -115,6 +120,7 @@ async function saleDto(database: FastifyInstance['db'], row: SaleRow): Promise<S
     discount: row.discount,
     total: row.total,
     change: Math.max(0, cashReceivedTotal - row.total),
+    status: row.status as Sale['status'],
     payments: paymentRows.map((p) => ({
       method: p.method,
       amount: p.amount,
@@ -144,6 +150,7 @@ async function findExistingSale(database: FastifyInstance['db'], clientTxnId: st
       total: sales.total,
       cashierName: users.name,
       soldAt: sales.soldAt,
+      status: sales.status,
     })
     .from(sales)
     .leftJoin(users, eq(sales.cashierId, users.id))
@@ -170,7 +177,9 @@ async function createSale(
   }
 
   if (input.payments.some((p) => p.method === 'kasbon')) {
-    throw new SaleError(400, 'Pembayaran kasbon tersedia mulai Fase 4.');
+    if (!input.customerId) {
+      throw new SaleError(400, 'Pembayaran kasbon wajib memilih pelanggan.');
+    }
   }
 
   const soldAt = input.soldAt ? new Date(input.soldAt) : new Date();
@@ -249,6 +258,19 @@ async function createSale(
 
     const receiptNo = await nextReceiptNo(tx as unknown as FastifyInstance['db'], storeId, soldAt);
 
+    // Validasi pelanggan untuk pembayaran kasbon.
+    let customerId: string | null = null;
+    const kasbonTotal = input.payments.filter((p) => p.method === 'kasbon').reduce((s, p) => s + p.amount, 0);
+    if (kasbonTotal > 0) {
+      const [customer] = await tx
+        .select({ id: customers.id })
+        .from(customers)
+        .where(and(eq(customers.id, input.customerId!), eq(customers.storeId, storeId)))
+        .limit(1);
+      if (!customer) throw new SaleError(400, 'Pelanggan tidak ditemukan.');
+      customerId = customer.id;
+    }
+
     const [sale] = await tx
       .insert(sales)
       .values({
@@ -257,6 +279,7 @@ async function createSale(
         receiptNo,
         shiftId: shift.id,
         cashierId: userId,
+        customerId,
         subtotal,
         discount,
         total,
@@ -312,6 +335,24 @@ async function createSale(
         note: `Penjualan ${receiptNo}`,
         createdBy: userId,
       });
+    }
+
+    // Catat hutang kasbon.
+    if (customerId && kasbonTotal > 0) {
+      await tx.insert(kasbonEntries).values({
+        storeId,
+        customerId,
+        saleId: sale!.id,
+        amount: kasbonTotal,
+        note: `Kasbon ${receiptNo}`,
+      });
+      await tx
+        .update(customers)
+        .set({
+          kasbonBalance: sql`${customers.kasbonBalance} + ${kasbonTotal}`,
+          updatedAt: new Date(),
+        })
+        .where(eq(customers.id, customerId));
     }
 
     return { saleId: sale!.id, receiptNo, subtotal, discount, total, lines };
@@ -459,6 +500,7 @@ export async function saleRoutes(app: FastifyInstance) {
         cashierName: users.name,
         soldAt: sales.soldAt,
         shiftId: sales.shiftId,
+        status: sales.status,
       })
       .from(sales)
       .leftJoin(users, eq(sales.cashierId, users.id))
@@ -478,5 +520,130 @@ export async function saleRoutes(app: FastifyInstance) {
     }
 
     return reply.send({ sale: await saleDto(database, row) });
+  });
+
+  /**
+   * Batalkan transaksi (void penuh). Pemilik bisa langsung; kasir butuh kata
+   * sandi pemilik. Stok dikembalikan, kasbon dibalik, kas shift dikoreksi.
+   */
+  app.post('/sales/:id/void', async (req, reply) => {
+    await requireAuth(req, reply);
+    if (reply.sent) return;
+    const parsed = saleVoidSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return err.badRequest(reply, parsed.error.issues[0]?.message ?? 'Data tidak valid.');
+    }
+    const database = req.server.db;
+    const session = req.sessionUser!;
+    const { storeId, userId } = session;
+    const { id } = req.params as { id: string };
+
+    if (session.role !== 'owner') {
+      const ok =
+        !!parsed.data.approvalPassword &&
+        (await verifyOwnerPassword(database, storeId, parsed.data.approvalPassword));
+      if (!ok) return err.forbidden(reply, 'Pembatalan membutuhkan persetujuan pemilik.');
+    }
+
+    try {
+      const result = await database.transaction(async (tx) => {
+        const [sale] = await tx
+          .select()
+          .from(sales)
+          .where(and(eq(sales.id, id), eq(sales.storeId, storeId)))
+          .limit(1);
+        if (!sale) throw new SaleError(404, 'Transaksi tidak ditemukan.');
+        if (sale.status !== 'completed') throw new SaleError(409, 'Transaksi sudah dibatalkan.');
+
+        await tx
+          .update(sales)
+          .set({ status: 'voided', voidReason: parsed.data.reason })
+          .where(eq(sales.id, id));
+
+        // Kembalikan stok + catat mutasi void.
+        const items = await tx.select().from(saleItems).where(eq(saleItems.saleId, id));
+        for (const item of items) {
+          const [product] = await tx
+            .select({ trackStock: products.trackStock })
+            .from(products)
+            .where(eq(products.id, item.productId))
+            .limit(1);
+          if (!product?.trackStock) continue;
+          const qtyStr = String(item.qty);
+          await tx
+            .update(products)
+            .set({ stockQty: sql`${products.stockQty} + ${qtyStr}` })
+            .where(eq(products.id, item.productId));
+          await tx.insert(stockMovements).values({
+            storeId,
+            productId: item.productId,
+            type: 'void',
+            qty: qtyStr,
+            unitCost: item.unitCost,
+            refId: id,
+            note: `Void ${sale.receiptNo}: ${parsed.data.reason}`,
+            createdBy: userId,
+          });
+        }
+
+        // Balik kasbon bila ada.
+        const kasbonRows = await tx
+          .select()
+          .from(kasbonEntries)
+          .where(eq(kasbonEntries.saleId, id));
+        for (const k of kasbonRows) {
+          await tx.insert(kasbonEntries).values({
+            storeId,
+            customerId: k.customerId,
+            saleId: id,
+            amount: -k.amount,
+            note: `Void ${sale.receiptNo}`,
+          });
+          await tx
+            .update(customers)
+            .set({
+              kasbonBalance: sql`${customers.kasbonBalance} - ${k.amount}`,
+              updatedAt: new Date(),
+            })
+            .where(eq(customers.id, k.customerId));
+        }
+
+        // Koreksi kas shift bila masih buka (uang tunai dikembalikan).
+        const cashRows = await tx
+          .select({ amount: payments.amount })
+          .from(payments)
+          .where(and(eq(payments.saleId, id), eq(payments.method, 'cash')));
+        const cashTotal = cashRows.reduce((s, p) => s + p.amount, 0);
+        const [shift] = await tx
+          .select({ id: shifts.id, closedAt: shifts.closedAt })
+          .from(shifts)
+          .where(eq(shifts.id, sale.shiftId))
+          .limit(1);
+        if (shift && !shift.closedAt && cashTotal > 0) {
+          await tx.insert(cashMovements).values({
+            shiftId: shift.id,
+            amount: -cashTotal,
+            note: `Void ${sale.receiptNo}: ${parsed.data.reason}`,
+            createdBy: userId,
+          });
+        }
+
+        return { receiptNo: sale.receiptNo };
+      });
+
+      await database.insert(auditLogs).values({
+        storeId,
+        userId,
+        action: 'sale.voided',
+        payload: { saleId: id, receiptNo: result.receiptNo, reason: parsed.data.reason },
+      });
+      return reply.send({ ok: true, receiptNo: result.receiptNo });
+    } catch (e) {
+      if (e instanceof SaleError) {
+        if (e.status === 404) return err.notFound(reply, e.message);
+        return err.conflict(reply, e.message);
+      }
+      throw e;
+    }
   });
 }

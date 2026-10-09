@@ -180,7 +180,7 @@ export function KasirPage() {
 
   const refreshShift = () => void queryClient.invalidateQueries({ queryKey: ['shift-current'] });
 
-  const checkout = async (payments: SalePayment[]) => {
+  const checkout = async (payments: SalePayment[], customerId?: string) => {
     const s = useCart.getState();
     setPaying(true);
     try {
@@ -194,6 +194,7 @@ export function KasirPage() {
           note: i.note,
         })),
         payments,
+        customerId,
         discountRp: s.discountRp,
         discountPct: s.discountPct,
         clientTotal: s.total(),

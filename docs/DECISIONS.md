@@ -171,3 +171,35 @@ di kolom pencarian kasir; integrasi kamera ditunda ke Fase 5.
 API tidak mengaktifkan CORS secara default; diaktifkan via env `CORS_ORIGIN`
 untuk E2E CI (web :5173 memanggil API :8080). Di Docker production, nginx
 memproksi `/api` sehingga tidak perlu CORS.
+
+## D29 — Void penuh di Fase 4, refund parsial ditunda
+
+Fase 4 mengimplementasikan void (pembatalan penuh transaksi). Refund parsial
+(pengembalian sebagian item dengan kondisi layak/rusak) ditunda karena butuh
+aturan stok dan kas yang lebih kompleks. Void: status → `voided`, stok
+dikembalikan via mutasi `void`, kasbon dibalik, kas shift dikoreksi bila shift
+masih buka, audit `sale.voided`.
+
+## D30 — Otorisasi void: pemilik langsung, kasir butuh kata sandi pemilik
+
+Pemilik bisa void langsung; kasir wajib memasukkan `approvalPassword` yang
+diverifikasi terhadap kata sandi pemilik aktif (tidak disimpan) — sama seperti
+mekanisme diskon (D21). Pengganti "PIN pemilik" karena pemilik tidak punya PIN.
+
+## D31 — Kasbon hanya untuk pelanggan terdaftar
+
+Pembayaran kasbon wajib `customerId`; saldo bertambah via `kasbon_entries`
+(+ hutang). Bayar kasbon boleh sebagian, tidak boleh melebihi saldo (tolak 400).
+Pengingat WhatsApp via link `wa.me` dengan teks terisi otomatis.
+
+## D32 — Kasbon hanya pembayaran penuh di kasir
+
+Di dialog bayar kasir, kasbon hanya tersedia sebagai metode tunggal (bukan
+gabungan/split) agar pemilihan pelanggan tetap sederhana. API tetap
+mendukungnya bila dibutuhkan.
+
+## D33 — Agregasi laporan memakai zona Asia/Jakarta
+
+Filter tanggal dan pengelompokan harian dihitung dalam zona Asia/Jakarta
+(`AT TIME ZONE 'Asia/Jakarta'`), bukan UTC. Transaksi void dikecualikan dari
+semua laporan.

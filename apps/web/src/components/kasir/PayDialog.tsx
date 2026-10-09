@@ -1,17 +1,20 @@
-import type { SalePayment } from '@kasir/shared';
+import type { Customer, SalePayment } from '@kasir/shared';
 import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { get } from '../../lib/api';
 import { formatRupiah } from '../ui/MoneyText';
 import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 import { Input } from '../ui/Input';
 
-type Method = 'cash' | 'qris' | 'transfer';
+type Method = 'cash' | 'qris' | 'transfer' | 'kasbon';
 
 const TABS: { id: Method | 'split'; label: string }[] = [
   { id: 'cash', label: 'Tunai' },
   { id: 'qris', label: 'QRIS' },
   { id: 'transfer', label: 'Transfer' },
+  { id: 'kasbon', label: 'Kasbon' },
   { id: 'split', label: 'Gabungan' },
 ];
 
@@ -40,13 +43,21 @@ export function PayDialog({
   open: boolean;
   total: number;
   onClose: () => void;
-  onConfirm: (payments: SalePayment[]) => void;
+  onConfirm: (payments: SalePayment[], customerId?: string) => void;
 }) {
   const [tab, setTab] = useState<Method | 'split'>('cash');
   const [cashReceived, setCashReceived] = useState('');
   const [reference, setReference] = useState('');
   const [splitRows, setSplitRows] = useState<SplitRow[]>([]);
   const [rowId, setRowId] = useState(1);
+  const [customerQ, setCustomerQ] = useState('');
+  const [customerId, setCustomerId] = useState<string | null>(null);
+
+  const customersQ = useQuery({
+    queryKey: ['customers', 'picker', customerQ],
+    queryFn: () => get<{ customers: Customer[] }>(`/customers?q=${encodeURIComponent(customerQ)}&limit=8`),
+    enabled: open && tab === 'kasbon',
+  });
 
   useEffect(() => {
     if (open) {
@@ -55,6 +66,8 @@ export function PayDialog({
       setReference('');
       setSplitRows([]);
       setRowId(1);
+      setCustomerQ('');
+      setCustomerId(null);
     }
   }, [open ]);
 
@@ -90,13 +103,19 @@ export function PayDialog({
           reference: r.method === 'cash' ? null : r.reference.trim() || null,
         })),
       );
+    } else if (tab === 'kasbon') {
+      onConfirm([{ method: 'kasbon', amount: total }], customerId ?? undefined);
     } else {
       onConfirm([{ method: tab, amount: total, reference: reference.trim() }]);
     }
   };
 
   const singleValid =
-    tab === 'cash' ? cashNum >= total && total > 0 : reference.trim().length > 0 && total > 0;
+    tab === 'cash'
+      ? cashNum >= total && total > 0
+      : tab === 'kasbon'
+        ? customerId !== null && total > 0
+        : reference.trim().length > 0 && total > 0;
 
   const addSplitRow = () => {
     setSplitRows((rows) => [...rows, { id: rowId, method: 'cash', amount: '', cashReceived: '', reference: '' }]);
@@ -166,6 +185,43 @@ export function PayDialog({
             />
             <p className="text-sm text-tinta-muted">
               Pastikan dana {formatRupiah(total)} sudah masuk sebelum menekan Bayar.
+            </p>
+          </div>
+        )}
+
+        {tab === 'kasbon' && (
+          <div className="space-y-3">
+            <Input
+              label="Cari pelanggan"
+              value={customerQ}
+              onChange={(e) => { setCustomerQ(e.target.value); setCustomerId(null); }}
+              placeholder="Ketik nama pelanggan…"
+            />
+            {(customersQ.data?.customers.length ?? 0) === 0 && customerQ && (
+              <p className="text-sm text-tinta-muted">Pelanggan tidak ditemukan. Daftarkan dulu di menu Pelanggan.</p>
+            )}
+            <ul className="max-h-40 space-y-1 overflow-y-auto">
+              {customersQ.data?.customers.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => setCustomerId(c.id)}
+                    aria-pressed={customerId === c.id}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-[10px] border p-3 text-left text-sm',
+                      customerId === c.id ? 'border-pandan-600 bg-pandan-50' : 'border-garis bg-surface',
+                    )}
+                  >
+                    <span className="font-bold">{c.name}</span>
+                    {c.kasbonBalance > 0 && (
+                      <span className="text-xs text-tinta-muted tabular-nums">kasbon {formatRupiah(c.kasbonBalance)}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-tinta-muted">
+              Kasbon {formatRupiah(total)} dicatat atas nama pelanggan terpilih.
             </p>
           </div>
         )}

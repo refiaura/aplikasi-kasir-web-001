@@ -48,12 +48,38 @@ export function AppShell({ children }: { children: ReactNode }) {
                     Produk
                   </Link>
                   <Link
+                    to="/laporan"
+                    className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
+                  >
+                    Laporan
+                  </Link>
+                  <Link
+                    to="/pelanggan"
+                    className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
+                  >
+                    Pelanggan
+                  </Link>
+                  <Link
+                    to="/riwayat"
+                    className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
+                  >
+                    Riwayat
+                  </Link>
+                  <Link
                     to="/perangkat"
                     className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
                   >
                     Perangkat
                   </Link>
                 </>
+              ) : null}
+              {user?.role === 'cashier' ? (
+                <Link
+                  to="/riwayat"
+                  className="rounded-[10px] px-3 py-2 text-sm font-semibold text-tinta-muted hover:bg-kertas hover:text-tinta [&.active]:bg-pandan-50 [&.active]:text-tinta"
+                >
+                  Riwayat
+                </Link>
               ) : null}
             </nav>
           </div>

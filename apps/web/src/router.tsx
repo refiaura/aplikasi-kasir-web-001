@@ -11,6 +11,10 @@ import { DashboardPage } from './pages/DashboardPage';
 import { KasirPage } from './pages/KasirPage';
 import { ProductsPage } from './pages/ProductsPage';
 import { DevicesPage } from './pages/DevicesPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { CustomersPage } from './pages/CustomersPage';
+import { CustomerDetailPage } from './pages/CustomerDetailPage';
+import { SalesHistoryPage } from './pages/SalesHistoryPage';
 import { LoginPage } from './pages/LoginPage';
 import { PinPage } from './pages/PinPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -105,6 +109,54 @@ const kasirRoute = createRoute({
   ),
 });
 
+const reportsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/laporan',
+  component: () => (
+    <RequireAuth roles={['owner']}>
+      <AppShell>
+        <ReportsPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
+const customersRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pelanggan',
+  component: () => (
+    <RequireAuth>
+      <AppShell>
+        <CustomersPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
+const customerDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/pelanggan/$id',
+  component: () => (
+    <RequireAuth>
+      <AppShell>
+        <CustomerDetailPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
+const salesHistoryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/riwayat',
+  component: () => (
+    <RequireAuth>
+      <AppShell>
+        <SalesHistoryPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
@@ -113,6 +165,10 @@ const routeTree = rootRoute.addChildren([
   productsRoute,
   kasirRoute,
   devicesRoute,
+  reportsRoute,
+  customersRoute,
+  customerDetailRoute,
+  salesHistoryRoute,
 ]);
 
 export const router = createRouter({ routeTree });

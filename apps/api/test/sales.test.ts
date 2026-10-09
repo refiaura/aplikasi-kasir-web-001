@@ -157,7 +157,7 @@ describe('penjualan', () => {
     expect(res.json().sale.discount).toBe(5000);
   });
 
-  it('validasi: total klien beda, bayar kurang, kasbon, diskon over', async () => {
+  it('validasi: total klien beda, bayar kurang, kasbon tanpa pelanggan, diskon over', async () => {
     app = await buildTestApp();
     const { cookie, ownerCookie } = await setupCashier(app);
     const p = await buatProduk(ownerCookie, app);
@@ -185,7 +185,7 @@ describe('penjualan', () => {
       payload: payloadJual(p.id, { payments: [{ method: 'kasbon', amount: 30000 }] }),
     });
     expect(kasbon.statusCode).toBe(400);
-    expect(kasbon.json().message).toContain('Fase 4');
+    expect(kasbon.json().message).toContain('pelanggan');
 
     const over = await app.inject({
       method: 'POST',

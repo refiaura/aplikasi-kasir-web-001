@@ -222,6 +222,8 @@ export const saleCreateSchema = z.object({
   clientTotal: rupiahSchema.optional(),
   soldAt: z.string().datetime({ offset: true }).optional(),
   approvalPassword: z.string().max(200).optional(),
+  /** Wajib bila ada pembayaran kasbon. */
+  customerId: z.string().uuid('Pelanggan tidak valid.').optional(),
 });
 export type SaleCreateInput = z.infer<typeof saleCreateSchema>;
 
@@ -253,6 +255,44 @@ export const cashMovementInputSchema = z.object({
   note: z.string().trim().min(2, 'Keterangan wajib diisi.').max(280),
 });
 export type CashMovementInput = z.infer<typeof cashMovementInputSchema>;
+
+/* ------------------------------------------------------------------ */
+/* Fase 4 — Laporan & kasbon                                           */
+/* ------------------------------------------------------------------ */
+
+/** Buat/ubah pelanggan. */
+export const customerInputSchema = z.object({
+  name: z.string().trim().min(2, 'Nama minimal 2 karakter.').max(100),
+  phone: z.string().trim().max(20, 'Nomor telepon maksimal 20 karakter.').optional(),
+});
+export type CustomerInput = z.infer<typeof customerInputSchema>;
+
+/** Bayar kasbon (boleh sebagian). */
+export const kasbonPaymentSchema = z.object({
+  amount: rupiahSchema.refine((v) => v > 0, 'Nominal harus lebih dari 0.'),
+  method: payMethodSchema.refine((m) => m !== 'kasbon', 'Tidak bisa bayar kasbon dengan kasbon.'),
+  reference: z.string().trim().max(80).optional(),
+  note: z.string().trim().max(280).optional(),
+});
+export type KasbonPaymentInput = z.infer<typeof kasbonPaymentSchema>;
+
+/** Batalkan transaksi (void penuh). */
+export const saleVoidSchema = z.object({
+  reason: z.string().trim().min(3, 'Alasan wajib diisi.').max(280),
+  /** Kata sandi pemilik; wajib bila yang membatalkan bukan pemilik. */
+  approvalPassword: z.string().max(200).optional(),
+});
+export type SaleVoidInput = z.infer<typeof saleVoidSchema>;
+
+const dateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format tanggal YYYY-MM-DD.');
+
+/** Filter tanggal laporan (zona Asia/Jakarta). */
+export const reportQuerySchema = z.object({
+  from: dateString.optional(),
+  to: dateString.optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(10),
+});
+export type ReportQuery = z.infer<typeof reportQuerySchema>;
 
 /** Format error baku API: { code, message, details? } berbahasa Indonesia. */
 export const apiErrorSchema = z.object({

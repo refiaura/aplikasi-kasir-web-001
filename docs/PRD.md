@@ -518,11 +518,11 @@ Estimasi 16 minggu untuk 1–2 developer full-stack sampai rilis publik; setiap 
 
 ### Fase 4 — Laporan & kasbon (minggu 10–11)
 
-- [ ] Dashboard hari ini + grafik 7 hari
-- [ ] Laporan ringkasan, per metode bayar, produk terlaris, per kasir, dengan filter tanggal
-- [ ] Pelanggan & kasbon: catat, bayar sebagian, saldo, pengingat WhatsApp
-- [ ] Riwayat transaksi, detail, cetak ulang, void/refund dengan PIN pemilik + audit log
-- [ ] Uji akurasi: bandingkan laporan dengan perhitungan spreadsheet dari data uji
+- [x] Dashboard hari ini + grafik 7 hari
+- [x] Laporan ringkasan, per metode bayar, produk terlaris, per kasir, dengan filter tanggal
+- [x] Pelanggan & kasbon: catat, bayar sebagian, saldo, pengingat WhatsApp
+- [x] Riwayat transaksi, detail, cetak ulang, void (penuh) dengan persetujuan pemilik + audit log — refund parsial ditunda (D29)
+- [x] Uji akurasi: bandingkan laporan dengan perhitungan spreadsheet dari data uji
 
 ### Fase 5 — Offline & perangkat (minggu 12–13)
 

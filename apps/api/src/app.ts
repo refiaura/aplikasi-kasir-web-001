@@ -9,9 +9,11 @@ import { db, type Db } from './db/index.js';
 import { err } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
 import { categoryRoutes } from './routes/categories.js';
+import { customerRoutes } from './routes/customers.js';
 import { dashboardRoutes } from './routes/dashboard.js';
 import { deviceRoutes } from './routes/devices.js';
 import { productRoutes } from './routes/products.js';
+import { reportRoutes } from './routes/reports.js';
 import { saleRoutes } from './routes/sales.js';
 import { shiftRoutes } from './routes/shifts.js';
 import { stockRoutes } from './routes/stock.js';
@@ -64,6 +66,8 @@ export function buildApp(opts?: BuildAppOptions) {
       await api.register(stockRoutes);
       await api.register(shiftRoutes);
       await api.register(saleRoutes);
+      await api.register(customerRoutes);
+      await api.register(reportRoutes);
       await api.register(uploadRoutes);
       await api.register(dashboardRoutes);
     },

@@ -41,8 +41,9 @@ export interface DashboardSummary {
     transaksi: number;
     kasbonAktif: number;
   };
-  stokMenipis: unknown[];
-  stokMinus: unknown[];
+  weekly: DailyOmzet[];
+  stokMenipis: { id: string; name: string; stockQty: number; unit: string }[];
+  stokMinus: { id: string; name: string; stockQty: number; unit: string }[];
 }
 
 /** Kategori produk. */
@@ -130,6 +131,7 @@ export interface Sale {
   discount: number;
   total: number;
   change: number;
+  status: 'completed' | 'voided' | 'refunded';
   payments: SalePayment[];
   items: {
     productId: string;
@@ -152,4 +154,58 @@ export interface OpenBill {
   discountPct: number;
   note?: string;
   createdAt: number;
+}
+
+/** Pelanggan. */
+export interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+  kasbonBalance: number;
+  updatedAt: string;
+}
+
+/** Entri kasbon (+ hutang, - pembayaran). */
+export interface KasbonEntry {
+  id: string;
+  customerId: string;
+  saleId: string | null;
+  receiptNo: string | null;
+  amount: number;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Ringkasan laporan. */
+export interface ReportSummary {
+  from: string;
+  to: string;
+  omzet: number;
+  labaKotor: number;
+  transaksi: number;
+  rataRata: number;
+  byMethod: { method: string; total: number; transaksi: number }[];
+}
+
+/** Produk terlaris. */
+export interface TopProduct {
+  productId: string;
+  name: string;
+  qty: number;
+  omzet: number;
+}
+
+/** Kinerja kasir. */
+export interface CashierStat {
+  cashierId: string;
+  name: string;
+  transaksi: number;
+  omzet: number;
+}
+
+/** Omzet harian untuk grafik. */
+export interface DailyOmzet {
+  date: string;
+  omzet: number;
+  transaksi: number;
 }

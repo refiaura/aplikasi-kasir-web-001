@@ -83,3 +83,73 @@ export interface StockMovement {
   createdByName: string | null;
   createdAt: string;
 }
+
+/** Shift kasir. */
+export interface Shift {
+  id: string;
+  deviceId: string;
+  deviceName: string | null;
+  openedByName: string | null;
+  openingCash: number;
+  expectedCash: number | null;
+  countedCash: number | null;
+  variance: number | null;
+  openedAt: string;
+  closedAt: string | null;
+  cashIn: number;
+  cashOut: number;
+  cashSales: number;
+}
+
+/** Item dalam keranjang/transaksi. */
+export interface CartItem {
+  productId: string;
+  name: string;
+  unit: string;
+  price: number;
+  imageUrl: string | null;
+  qty: number;
+  discountRp: number;
+  discountPct: number;
+  note?: string;
+}
+
+/** Pembayaran dalam transaksi. */
+export interface SalePayment {
+  method: string;
+  amount: number;
+  cashReceived?: number | null;
+  reference?: string | null;
+}
+
+/** Transaksi penjualan. */
+export interface Sale {
+  id: string;
+  receiptNo: string;
+  subtotal: number;
+  discount: number;
+  total: number;
+  change: number;
+  payments: SalePayment[];
+  items: {
+    productId: string;
+    name: string;
+    qty: number;
+    unitPrice: number;
+    discount: number;
+    note: string | null;
+  }[];
+  cashierName: string | null;
+  soldAt: string;
+}
+
+/** Pesanan tersimpan (open bill) di perangkat. */
+export interface OpenBill {
+  id: string;
+  name: string;
+  items: CartItem[];
+  discountRp: number;
+  discountPct: number;
+  note?: string;
+  createdAt: number;
+}

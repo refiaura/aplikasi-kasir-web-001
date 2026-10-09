@@ -225,3 +225,28 @@ menimpa cache lokal dengan data server tanpa merge.
 
 Sesuai PRD, ID transaksi klien memakai UUID v7 (timestamp + acak) agar
 terurut waktu dan tetap unik untuk idempotensi.
+
+## D38 — Komponen navigasi bersama (PageHeader, BackButton, Breadcrumb)
+
+Audit UI/UX 2026-10-09 menemukan halaman detail tanpa jalan kembali
+(CustomerDetail) dan inkonsistensi header antar halaman. Diputuskan memakai
+satu komponen `PageHeader` (judul + deskripsi + tombol back + slot aksi +
+breadcrumb opsional) di semua halaman utama. `BackButton` memakai history
+browser bila ada, fallback ke rute yang diberi.
+
+## D39 — Navigasi mobile via drawer, bukan tab bar
+
+Header desktop (5–6 link) overflow di HP. Diputuskan drawer kiri (hamburger)
+memakai Sheet yang sudah ada, bukan bottom tab bar, agar konsisten dengan
+pola sheet yang dipakai keranjang kasir. Sheet diperluas dengan `side="left"`.
+
+## D40 — Kartu dashboard bisa diklik
+
+Kartu ringkasan dashboard kini link ke halaman relevan (omzet/laba → /laporan,
+transaksi → /riwayat, kasbon → /pelanggan) agar angka punya jalan ke detail.
+
+## D41 — Tidak ada perubahan API selama polish desain
+
+Audit meminta info tambahan di list (mis. metode bayar di riwayat transaksi),
+tetapi diputuskan tidak mengubah endpoint API; perbaikan hanya di sisi klien
+agar kontrak API tetap stabil.

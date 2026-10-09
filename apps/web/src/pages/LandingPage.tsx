@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { BarChart3, Check, Printer, Smartphone, WifiOff, HandCoins, ScanBarcode } from 'lucide-react';
+import { BarChart3, Check, ChevronDown, Printer, Smartphone, WifiOff, HandCoins, ScanBarcode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 
 const FEATURES = [
@@ -83,7 +83,7 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-kertas">
       {/* Navigasi */}
-      <header className="border-b border-garis bg-surface">
+      <header className="sticky top-0 z-30 border-b border-garis bg-surface">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
           <span className="text-lg font-extrabold tracking-tight">Kasir UMKM</span>
           <nav className="flex items-center gap-2">
@@ -141,8 +141,13 @@ export function LandingPage() {
           {PLANS.map((p) => (
             <article
               key={p.name}
-              className={`rounded-[16px] border p-6 ${p.highlight ? 'border-pandan-600 bg-surface' : 'border-garis bg-surface'}`}
+              className={`relative rounded-[16px] border p-6 ${p.highlight ? 'border-2 border-pandan-600 bg-surface' : 'border-garis bg-surface'}`}
             >
+              {p.highlight && (
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-[999px] bg-pandan-600 px-3 py-1 text-xs font-extrabold text-white">
+                  Populer
+                </span>
+              )}
               <h3 className="font-bold">{p.name}</h3>
               <p className="mt-2">
                 <span className="text-3xl font-extrabold tabular-nums">{p.price}</span>
@@ -171,8 +176,11 @@ export function LandingPage() {
         <h2 className="text-center text-2xl font-extrabold tracking-tight">Pertanyaan umum</h2>
         <div className="mt-8 space-y-3">
           {FAQS.map(({ q, a }) => (
-            <details key={q} className="rounded-[14px] border border-garis bg-surface p-4">
-              <summary className="cursor-pointer font-bold">{q}</summary>
+            <details key={q} className="group rounded-[14px] border border-garis bg-surface p-4">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 font-bold [&::-webkit-details-marker]:hidden">
+                {q}
+                <ChevronDown size={18} className="shrink-0 text-tinta-muted transition-transform group-open:rotate-180" />
+              </summary>
               <p className="mt-2 text-sm text-tinta-muted">{a}</p>
             </details>
           ))}

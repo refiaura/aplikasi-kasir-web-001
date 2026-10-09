@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { Dialog, DialogContent } from '../components/ui/Dialog';
 import { Input } from '../components/ui/Input';
 import { MoneyText, formatRupiah } from '../components/ui/MoneyText';
+import { PageHeader } from '../components/ui/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import { cn } from '../lib/cn';
 
@@ -69,10 +70,12 @@ export function CustomerDetailPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">{customer.name}</h1>
-        {customer.phone && <p className="text-sm text-tinta-muted">{customer.phone}</p>}
-      </div>
+      <PageHeader
+        title={customer.name}
+        desc={customer.phone ?? undefined}
+        backTo="/pelanggan"
+        trail={[{ label: 'Pelanggan', to: '/pelanggan' }, { label: customer.name }]}
+      />
 
       <section className="rounded-[14px] border border-garis bg-surface p-4" aria-label="Saldo kasbon">
         <p className="text-sm text-tinta-muted">Sisa kasbon</p>
@@ -82,14 +85,11 @@ export function CustomerDetailPage() {
             Bayar kasbon
           </Button>
           {waUrl && customer.kasbonBalance > 0 && (
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="flex h-12 items-center rounded-[10px] bg-aksi px-5 text-base font-bold text-aksi-text hover:bg-aksi-hover"
-            >
-              Ingatkan via WhatsApp
-            </a>
+            <Button asChild>
+              <a href={waUrl} target="_blank" rel="noreferrer">
+                Ingatkan via WhatsApp
+              </a>
+            </Button>
           )}
         </div>
       </section>
@@ -103,10 +103,20 @@ export function CustomerDetailPage() {
         ) : (
           <ul className="space-y-2">
             {entries.map((e) => (
-              <li key={e.id} className="flex items-center justify-between rounded-[10px] border border-garis bg-surface p-3 text-sm">
+              <li key={e.id} className="flex items-center justify-between gap-3 rounded-[10px] border border-garis bg-surface p-3 text-sm">
                 <div className="min-w-0">
-                  <p className="truncate font-semibold">{e.note ?? (e.amount > 0 ? 'Kasbon' : 'Pembayaran')}</p>
-                  <p className="text-tinta-muted">
+                  <p className="flex flex-wrap items-center gap-2 font-semibold">
+                    <span
+                      className={cn(
+                        'rounded-[999px] px-2 py-0.5 text-xs font-bold',
+                        e.amount > 0 ? 'bg-cabai-600/10 text-cabai-600' : 'bg-pandan-50 text-pandan-600',
+                      )}
+                    >
+                      {e.amount > 0 ? 'Kasbon' : 'Pembayaran'}
+                    </span>
+                    {e.note && <span className="truncate">{e.note}</span>}
+                  </p>
+                  <p className="mt-0.5 text-tinta-muted">
                     {new Date(e.createdAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}
                     {e.receiptNo ? ` · ${e.receiptNo}` : ''}
                   </p>

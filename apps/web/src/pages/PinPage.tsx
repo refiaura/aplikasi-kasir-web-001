@@ -2,6 +2,7 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 import { ApiRequestError, post } from '../lib/api';
 import { useSessionStore } from '../stores/session';
+import { AuthShell } from '../components/ui/AuthShell';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { NumberPad } from '../components/ui/NumberPad';
@@ -15,6 +16,7 @@ export function PinPage() {
   const [deviceCode, setDeviceCode] = useState('');
   const [pin, setPin] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [shakeKey, setShakeKey] = useState(0);
 
   const handleSubmit = async () => {
     if (deviceCode.trim().length === 0 || pin.length !== 6 || submitting) return;
@@ -36,33 +38,51 @@ export function PinPage() {
         desc: e instanceof ApiRequestError ? e.message : 'Tidak dapat menghubungi server.',
       });
       setPin('');
+      setShakeKey((k) => k + 1);
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-8">
-      <h1 className="text-3xl font-extrabold tracking-tight">Masuk sebagai kasir</h1>
-      <p className="mt-1 text-sm text-tinta-muted">Masukkan kode perangkat dan PIN 6 digit.</p>
+    <AuthShell
+      title="Masuk sebagai kasir"
+      desc="Masukkan kode perangkat dan PIN 6 digit."
+      footer={
+        <p className="text-tinta-muted">
+          Pemilik toko?{' '}
+          <Link to="/login" className="font-semibold text-pandan-600 hover:underline">
+            Masuk dengan email
+          </Link>
+        </p>
+      }
+    >
+      <Input
+        label="Kode perangkat"
+        value={deviceCode}
+        onChange={(e) => setDeviceCode(e.target.value.toUpperCase())}
+        placeholder="mis. KASIR-01"
+        autoComplete="off"
+        className="uppercase"
+      />
 
-      <div className="mt-6">
-        <Input
-          label="Kode perangkat"
-          value={deviceCode}
-          onChange={(e) => setDeviceCode(e.target.value)}
-          placeholder="mis. KASIR-01"
-          autoComplete="off"
-        />
-      </div>
-
-      <div className="mt-4 flex justify-center gap-3" aria-label="PIN">
+      <div
+        key={shakeKey}
+        className={cn('mt-4 flex justify-center gap-3', shakeKey > 0 && 'anim-shake')}
+        aria-label="PIN"
+        role="status"
+        aria-live="polite"
+      >
         {[0, 1, 2, 3, 4, 5].map((i) => (
           <span
             key={i}
             className={cn(
               'flex h-12 w-10 items-center justify-center rounded-[10px] border text-xl font-bold',
-              i < pin.length ? 'border-pandan-600 bg-pandan-50 text-pandan-600' : 'border-garis bg-surface',
+              i < pin.length
+                ? 'border-pandan-600 bg-pandan-50 text-pandan-600'
+                : shakeKey > 0 && pin.length === 0
+                  ? 'border-cabai-600 bg-surface'
+                  : 'border-garis bg-surface',
             )}
           >
             {i < pin.length ? '•' : ''}
@@ -86,13 +106,6 @@ export function PinPage() {
       >
         {submitting ? 'Memproses…' : 'Masuk'}
       </Button>
-
-      <p className="mt-6 text-center text-sm text-tinta-muted">
-        Pemilik toko?{' '}
-        <Link to="/login" className="font-semibold text-pandan-600 hover:underline">
-          Masuk dengan email
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

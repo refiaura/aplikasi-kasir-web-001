@@ -6,6 +6,7 @@ import { ApiRequestError, get, post } from '../lib/api';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useToast } from '../components/ui/Toast';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface Cashier {
   id: string;
@@ -73,7 +74,12 @@ function DeviceSection() {
               <li key={d.id} className="flex items-center justify-between px-4 py-3">
                 <div>
                   <p className="font-semibold">{d.code}</p>
-                  <p className="text-sm text-tinta-muted">{d.name}</p>
+                  <p className="text-sm text-tinta-muted">
+                    {d.name}
+                    {d.lastSeenAt
+                      ? ` · aktif ${new Date(d.lastSeenAt).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+                      : ' · belum pernah dipakai'}
+                  </p>
                 </div>
                 <span className="rounded-[999px] bg-pandan-50 px-2.5 py-1 text-xs font-bold text-pandan-600">
                   Terdaftar
@@ -169,10 +175,10 @@ function CashierSection() {
 export function DevicesPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Perangkat & kasir</h1>
-        <p className="text-sm text-tinta-muted">Siapkan perangkat dan akun kasir sebelum buka toko.</p>
-      </div>
+      <PageHeader
+        title="Perangkat & kasir"
+        desc="Siapkan perangkat dan akun kasir sebelum buka toko."
+      />
       <DeviceSection />
       <CashierSection />
     </div>

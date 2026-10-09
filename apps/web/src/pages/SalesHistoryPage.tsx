@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Sale } from '@kasir/shared';
+import { ReceiptText } from 'lucide-react';
 import { useState } from 'react';
 import { ApiRequestError, get, post } from '../lib/api';
 import { Button } from '../components/ui/Button';
@@ -10,6 +11,8 @@ import { ReceiptDialog } from '../components/kasir/ReceiptDialog';
 import { useToast } from '../components/ui/Toast';
 import { useSessionStore } from '../stores/session';
 import { cn } from '../lib/cn';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageHeader } from '../components/ui/PageHeader';
 
 interface SaleListItem {
   id: string;
@@ -76,15 +79,19 @@ export function SalesHistoryPage() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Riwayat transaksi</h1>
-        <p className="text-sm text-tinta-muted">{isOwner ? 'Semua perangkat.' : 'Perangkat ini.'}</p>
-      </div>
+      <PageHeader
+        title="Riwayat transaksi"
+        desc={isOwner ? 'Semua perangkat.' : 'Perangkat ini.'}
+      />
 
       {listQ.isLoading ? (
         <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-16" />)}</div>
       ) : items.length === 0 ? (
-        <p className="py-8 text-center text-sm text-tinta-muted">Belum ada transaksi.</p>
+        <EmptyState
+          icon={ReceiptText}
+          title="Belum ada transaksi"
+          desc="Transaksi yang dibuat akan tercatat di sini."
+        />
       ) : (
         <ul className="space-y-2">
           {items.map((s) => (
@@ -175,9 +182,13 @@ export function SalesHistoryPage() {
 
       {(listQ.data?.pages ?? 1) > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹</Button>
-          <span className="text-sm tabular-nums">{page} / {listQ.data!.pages}</span>
-          <Button variant="secondary" disabled={page >= listQ.data!.pages} onClick={() => setPage(page + 1)}>›</Button>
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            Sebelumnya
+          </Button>
+          <span className="text-sm tabular-nums text-tinta-muted">{page} / {listQ.data!.pages}</span>
+          <Button variant="secondary" size="sm" disabled={page >= listQ.data!.pages} onClick={() => setPage(page + 1)}>
+            Berikutnya
+          </Button>
         </div>
       )}
     </div>

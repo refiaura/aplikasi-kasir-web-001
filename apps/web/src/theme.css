@@ -90,9 +90,22 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sheet-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
 .anim-fade-in { animation: fade-in 150ms ease-out; }
 .anim-slide-up { animation: slide-up 200ms ease-out; }
 .anim-sheet-up { animation: sheet-up 200ms ease-out; }
+.anim-sheet-left { animation: sheet-left 200ms ease-out; }
+.anim-shake { animation: shake 300ms ease-in-out; }
 
 /* Skeleton loading (bukan spinner). */
 .skeleton {

@@ -12,6 +12,7 @@ import { PayDialog } from '../components/kasir/PayDialog';
 import { ReceiptDialog } from '../components/kasir/ReceiptDialog';
 import { ShiftDialog } from '../components/kasir/ShiftDialog';
 import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
 import { Dialog, DialogContent } from '../components/ui/Dialog';
 import { MoneyText } from '../components/ui/MoneyText';
 import { useToast } from '../components/ui/Toast';
@@ -338,17 +339,16 @@ export function KasirPage() {
           {/* Kiri: produk */}
           <section className="space-y-3">
             <div className="flex gap-2">
-              <label className="relative block flex-1">
-                <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-tinta-muted" />
-                <input
+              <div className="flex-1">
+                <Input
                   type="search"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Cari produk atau scan barcode…"
-                aria-label="Cari produk"
-                className="h-12 w-full rounded-[10px] border border-garis bg-surface pl-11 pr-4 text-base placeholder:text-tinta-muted focus:outline-2 focus:outline-pandan-600"
-              />
-              </label>
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Cari produk atau scan barcode…"
+                  aria-label="Cari produk"
+                  leading={<Search size={18} />}
+                />
+              </div>
               <Button
                 variant="secondary"
                 aria-label="Pindai barcode"
@@ -359,7 +359,8 @@ export function KasirPage() {
                 <ScanBarcode size={20} />
               </Button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Kategori">
+            <div className="relative">
+              <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Kategori">
               <button
                 type="button"
                 onClick={() => setCategoryId('')}
@@ -383,6 +384,8 @@ export function KasirPage() {
                   {c.name}
                 </button>
               ))}
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-kertas to-transparent" aria-hidden />
             </div>
 
             {productsQuery.isLoading ? (
@@ -392,20 +395,42 @@ export function KasirPage() {
                 ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {products.map((p) => (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => addItem(p)}
-                    className="flex min-h-[7rem] flex-col items-start justify-between rounded-[14px] border border-garis bg-surface p-3 text-left transition-colors hover:border-pandan-600"
-                  >
-                    <span className="line-clamp-2 text-sm font-bold leading-tight">{p.name}</span>
-                    <span className="mt-2 text-sm font-extrabold tabular-nums text-pandan-600">
-                      {formatRupiah(p.price)}
-                    </span>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-2 pb-20 sm:grid-cols-3 lg:pb-0">
+                {products.map((p) => {
+                  const out = p.trackStock && p.stockQty <= 0;
+                  const low = p.trackStock && !out && p.stockQty <= p.minStock;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => addItem(p)}
+                      disabled={out}
+                      aria-label={`${p.name}, ${formatRupiah(p.price)}${p.trackStock ? `, stok ${p.stockQty}` : ''}`}
+                      className="flex min-h-[7rem] flex-col items-start justify-between rounded-[14px] border border-garis bg-surface p-3 text-left transition-colors hover:border-pandan-600 disabled:opacity-50"
+                    >
+                      <span className="flex w-full items-start justify-between gap-2">
+                        <span className="line-clamp-2 text-sm font-bold leading-tight">{p.name}</span>
+                        {p.trackStock && (
+                          <span
+                            className={cn(
+                              'shrink-0 rounded-[999px] px-2 py-0.5 text-xs font-bold tabular-nums',
+                              out
+                                ? 'bg-cabai-600/10 text-cabai-600'
+                                : low
+                                  ? 'bg-kunyit-50 text-kunyit-700'
+                                  : 'bg-pandan-50 text-pandan-600',
+                            )}
+                          >
+                            {out ? 'Habis' : p.stockQty}
+                          </span>
+                        )}
+                      </span>
+                      <span className="mt-2 text-sm font-extrabold tabular-nums text-pandan-600">
+                        {formatRupiah(p.price)}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {!productsQuery.isLoading && products.length === 0 && (

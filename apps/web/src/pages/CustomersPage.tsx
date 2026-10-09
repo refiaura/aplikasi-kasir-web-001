@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Customer } from '@kasir/shared';
-import { Search } from 'lucide-react';
+import { Plus, Search, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from '@tanstack/react-router';
 import { ApiRequestError, get, post } from '../lib/api';
@@ -8,6 +8,9 @@ import { Button } from '../components/ui/Button';
 import { Dialog, DialogContent } from '../components/ui/Dialog';
 import { Input } from '../components/ui/Input';
 import { formatRupiah } from '../components/ui/MoneyText';import { useToast } from '../components/ui/Toast';
+import { EmptyState } from '../components/ui/EmptyState';
+import { PageHeader } from '../components/ui/PageHeader';
+import { cn } from '../lib/cn';
 
 function useDebouncedValue<T>(value: T, delayMs: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -57,36 +60,57 @@ export function CustomersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Pelanggan</h1>
-          <p className="text-sm text-tinta-muted">Kelola pelanggan dan kasbon.</p>
-        </div>
-        <Button onClick={() => setDialogOpen(true)}>+ Pelanggan</Button>
-      </div>
+      <PageHeader
+        title="Pelanggan"
+        desc="Kelola pelanggan dan kasbon."
+        actions={
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus size={18} />
+            Tambah
+          </Button>
+        }
+      />
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="relative block min-w-52 flex-1">
-          <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-tinta-muted" />
-          <input
+        <div className="min-w-52 flex-1">
+          <Input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Cari nama…"
             aria-label="Cari pelanggan"
-            className="h-12 w-full rounded-[10px] border border-garis bg-surface pl-11 pr-4 text-base placeholder:text-tinta-muted focus:outline-2 focus:outline-pandan-600"
+            leading={<Search size={18} />}
           />
-        </label>
-        <label className="flex h-12 cursor-pointer items-center gap-2 rounded-[10px] border border-garis bg-surface px-4 text-sm font-semibold">
-          <input type="checkbox" checked={onlyKasbon} onChange={(e) => setOnlyKasbon(e.target.checked)} className="h-5 w-5" />
+        </div>
+        <button
+          type="button"
+          onClick={() => setOnlyKasbon((v) => !v)}
+          aria-pressed={onlyKasbon}
+          className={cn(
+            'h-12 rounded-[999px] border px-4 text-sm font-bold',
+            onlyKasbon
+              ? 'border-pandan-600 bg-pandan-50 text-pandan-600'
+              : 'border-garis bg-surface text-tinta-muted hover:bg-kertas',
+          )}
+        >
           Ada kasbon
-        </label>
+        </button>
       </div>
 
       {isLoading ? (
         <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-16" />)}</div>
       ) : customers.length === 0 ? (
-        <p className="py-8 text-center text-sm text-tinta-muted">Belum ada pelanggan.</p>
+        <EmptyState
+          icon={Users}
+          title="Belum ada pelanggan"
+          desc="Tambahkan pelanggan agar kasbon bisa dicatat atas nama."
+          action={
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus size={18} />
+              Tambah pelanggan
+            </Button>
+          }
+        />
       ) : (
         <ul className="space-y-2">
           {customers.map((c) => (

@@ -4,8 +4,10 @@ import { Link, useNavigate } from '@tanstack/react-router';
 import { useForm } from 'react-hook-form';
 import { ApiRequestError, post } from '../lib/api';
 import { useSessionStore } from '../stores/session';
+import { AuthShell } from '../components/ui/AuthShell';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { PasswordInput } from '../components/ui/PasswordInput';
 import { useToast } from '../components/ui/Toast';
 
 export function RegisterPage() {
@@ -34,10 +36,32 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-4 py-8">
-      <h1 className="text-3xl font-extrabold tracking-tight">Daftarkan tokomu</h1>
-      <p className="mt-1 text-sm text-tinta-muted">Gratis untuk 1 outlet. Bisa langsung transaksi.</p>
-      <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4" noValidate>
+    <AuthShell
+      title="Daftarkan tokomu"
+      desc="Gratis untuk 1 outlet. Bisa langsung transaksi."
+      footer={
+        <>
+          <p className="text-tinta-muted">
+            Sudah punya akun?{' '}
+            <Link to="/login" className="font-semibold text-pandan-600 hover:underline">
+              Masuk
+            </Link>
+          </p>
+          <p className="text-xs text-tinta-muted">
+            Dengan mendaftar, kamu menyetujui{' '}
+            <Link to="/syarat" className="font-semibold text-pandan-600 hover:underline">
+              Syarat layanan
+            </Link>{' '}
+            dan{' '}
+            <Link to="/privasi" className="font-semibold text-pandan-600 hover:underline">
+              Kebijakan privasi
+            </Link>
+            .
+          </p>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Input label="Nama kamu" autoComplete="name" error={errors.name?.message} {...register('name')} />
         <Input
           label="Nama toko"
@@ -46,9 +70,8 @@ export function RegisterPage() {
           {...register('storeName')}
         />
         <Input label="Email" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
-        <Input
+        <PasswordInput
           label="Kata sandi"
-          type="password"
           autoComplete="new-password"
           hint="Minimal 8 karakter."
           error={errors.password?.message}
@@ -65,12 +88,6 @@ export function RegisterPage() {
           {isSubmitting ? 'Memproses…' : 'Daftar'}
         </Button>
       </form>
-      <p className="mt-6 text-center text-sm text-tinta-muted">
-        Sudah punya akun?{' '}
-        <Link to="/login" className="font-semibold text-pandan-600 hover:underline">
-          Masuk
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

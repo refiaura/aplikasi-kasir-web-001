@@ -7,24 +7,28 @@ export const Sheet = DialogPrimitive.Root;
 export const SheetTrigger = DialogPrimitive.Trigger;
 export const SheetClose = DialogPrimitive.Close;
 
-/** Bottom sheet untuk layar kecil (dipakai untuk keranjang di Fase 3). */
+/** Bottom sheet untuk layar kecil, atau drawer kiri untuk navigasi. */
 export function SheetContent({
   children,
   title,
   className,
+  side = 'bottom',
 }: {
   children: ReactNode;
   title: string;
   className?: string;
+  side?: 'bottom' | 'left';
 }) {
+  const isLeft = side === 'left';
   return (
     <DialogPrimitive.Portal>
       <DialogPrimitive.Overlay className="anim-fade-in fixed inset-0 z-40 bg-black/40" />
       <DialogPrimitive.Content
         aria-describedby={undefined}
         className={cn(
-          'anim-sheet-up fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto',
-          'rounded-t-[14px] border-t border-garis bg-surface p-6',
+          isLeft
+            ? 'anim-sheet-left fixed inset-y-0 left-0 z-50 w-[85vw] max-w-80 overflow-y-auto border-r border-garis bg-surface p-5'
+            : 'anim-sheet-up fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-[14px] border-t border-garis bg-surface p-6',
           className,
         )}
       >

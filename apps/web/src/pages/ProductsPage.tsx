@@ -7,7 +7,9 @@ import { SeedDialog } from '../components/products/SeedDialog';
 import { StockDialog } from '../components/products/StockDialog';
 import { Button } from '../components/ui/Button';
 import { Dialog, DialogContent } from '../components/ui/Dialog';
+import { Input } from '../components/ui/Input';
 import { MoneyText } from '../components/ui/MoneyText';
+import { PageHeader } from '../components/ui/PageHeader';
 import { useToast } from '../components/ui/Toast';
 import { ApiRequestError, get, patch } from '../lib/api';
 import { cn } from '../lib/cn';
@@ -116,37 +118,34 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">Produk</h1>
-          <p className="text-sm text-tinta-muted">
-            {data ? `${data.total} produk` : 'Memuat…'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => setSeedOpen(true)}>
-            <Sparkles size={18} />
-            Isi contoh
-          </Button>
-          <Button onClick={() => setProductDialog({ open: true, product: null })}>
-            <Plus size={18} />
-            Tambah produk
-          </Button>
-        </div>
-      </div>
+      <PageHeader
+        title="Produk"
+        desc={data ? `${data.total} produk` : 'Memuat…'}
+        actions={
+          <>
+            <Button variant="secondary" onClick={() => setSeedOpen(true)}>
+              <Sparkles size={18} />
+              Isi contoh
+            </Button>
+            <Button onClick={() => setProductDialog({ open: true, product: null })}>
+              <Plus size={18} />
+              Tambah produk
+            </Button>
+          </>
+        }
+      />
 
       <div className="flex flex-col gap-3">
-        <label className="relative block max-w-md">
-          <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-tinta-muted" />
-          <input
+        <div className="max-w-md">
+          <Input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Cari nama produk…"
             aria-label="Cari produk"
-            className="h-12 w-full rounded-[10px] border border-garis bg-surface pl-11 pr-4 text-base text-tinta placeholder:text-tinta-muted focus:outline-2 focus:outline-offset-1 focus:outline-pandan-600"
+            leading={<Search size={18} />}
           />
-        </label>
+        </div>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Filter kategori">
           <button
             type="button"
@@ -225,7 +224,7 @@ export function ProductsPage() {
                   {[p.sku, p.categoryName].filter(Boolean).join(' · ') || p.unit}
                 </p>
               </div>
-              <div className="hidden text-right sm:block">
+              <div className="shrink-0 text-right">
                 <MoneyText value={p.price} className="font-bold" />
                 <p className="text-xs text-tinta-muted">/{p.unit}</p>
               </div>
@@ -238,7 +237,7 @@ export function ProductsPage() {
                   title="Stok masuk"
                   aria-label={`Stok masuk ${p.name}`}
                   onClick={() => setStockDialog({ open: true, product: p, mode: 'in' })}
-                  className="flex h-10 w-10 items-center justify-center rounded-[10px] text-pandan-600 hover:bg-pandan-50"
+                  className="flex h-12 w-12 items-center justify-center rounded-[10px] text-pandan-600 hover:bg-pandan-50"
                 >
                   <TrendingUp size={18} />
                 </button>
@@ -247,7 +246,7 @@ export function ProductsPage() {
                   title="Penyesuaian stok"
                   aria-label={`Sesuaikan stok ${p.name}`}
                   onClick={() => setStockDialog({ open: true, product: p, mode: 'adjust' })}
-                  className="flex h-10 w-10 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
+                  className="flex h-12 w-12 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
                 >
                   <TrendingDown size={18} />
                 </button>
@@ -256,7 +255,7 @@ export function ProductsPage() {
                   title="Ubah"
                   aria-label={`Ubah ${p.name}`}
                   onClick={() => setProductDialog({ open: true, product: p })}
-                  className="flex h-10 w-10 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
+                  className="flex h-12 w-12 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
                 >
                   <Pencil size={18} />
                 </button>
@@ -265,7 +264,7 @@ export function ProductsPage() {
                   title="Nonaktifkan"
                   aria-label={`Nonaktifkan ${p.name}`}
                   onClick={() => setDeactivateTarget(p)}
-                  className="flex h-10 w-10 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
+                  className="flex h-12 w-12 items-center justify-center rounded-[10px] text-tinta-muted hover:bg-kertas"
                 >
                   <Archive size={18} />
                 </button>

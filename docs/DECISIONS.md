@@ -66,3 +66,57 @@ Spec e2e (`apps/web/e2e`) memverifikasi alur daftar → dashboard kosong →
 perangkat → PIN kasir dan bisa dijalankan lokal (lihat komentar di
 `playwright.config.ts`). Belum di-wire ke CI Fase 1; masuk CI di Fase 3
 bersama test alur kasir penuh.
+
+# Catatan Keputusan (Fase 2)
+
+## D11 — Master data: tulis owner-only, baca boleh kasir
+
+CRUD kategori/produk dan mutasi stok manual hanya pemilik. `GET /products` dan
+riwayat mutasi boleh dibaca kasir (dibutuhkan layar kasir Fase 3). Keputusan izin,
+bukan fitur baru.
+
+## D12 — Stok awal = mutasi purchase "Stok awal"
+
+`initialStock` saat pembuatan produk (dan seed) selalu dicatat sebagai
+`stock_movements` tipe `purchase` dalam satu transaksi, agar ledger stok lengkap
+sejak hari pertama.
+
+## D13 — Harga modal = pembelian terakhir (last cost)
+
+`POST /stock/movements` tipe `purchase` dengan `unitCost` memperbarui
+`products.cost`. Bukan rata-rata tertimbang — paling sederhana dan dapat
+diprediksi; bisa direvisi bila akuntansi membutuhkannya.
+
+## D14 — Penyesuaian wajib alasan; opname = delta di klien
+
+`adjustment` membutuhkan `note` (alasan). Opname tidak punya tipe tersendiri: UI
+menghitung selisih (hasil hitung − stok tercatat) dan mengirimnya sebagai
+`adjustment` dengan alasan "Opname: …".
+
+## D15 — Foto produk di disk lokal `/uploads/`
+
+`POST /uploads` (maks 3MB, hanya WebP/PNG/JPEG) menyimpan file bernama UUID dan
+diserve statis di `/uploads/*`; direktori di-mount sebagai volume di
+docker-compose. Production multi-instance disarankan pindah ke object storage.
+
+## D16 — Hapus produk = soft delete
+
+`DELETE /products/:id` hanya mengeset `is_active=false` agar riwayat transaksi
+tetap utuh. Produk nonaktif hilang dari daftar dan pencarian.
+
+## D17 — Tipe angka: bigint→number, numeric→Number() di DTO
+
+`price`/`cost` memakai `bigint(mode: 'number')` — aman hingga
+Rp9.007.199.254.740.993. `stock_qty`/`min_stock` `numeric(12,3)` dikembalikan pg
+sebagai string lalu dikonversi `Number()` di DTO.
+
+## D18 — Impor CSV tetap di Fase 6
+
+Endpoint `POST /products/import` tercantum di PRD pada bagian impor/ekspor CSV
+(Fase 6); tidak dikerjakan di Fase 2 sesuai aturan cakupan fase.
+
+## D19 — Versi plugin Fastify 5
+
+`@fastify/multipart` v8 dan `@fastify/static` v7 hanya mendukung Fastify 4
+(gagal di `checkVersion` fastify-plugin). Dinaikkan ke multipart v9 / static v8.
+`@fastify/static` mewajibkan `root` absolut → `config.uploadDir` selalu di-`resolve()`.

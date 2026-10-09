@@ -8,6 +8,7 @@ import { AppShell } from './components/AppShell';
 import { GuestOnly, RequireAuth } from './components/guards';
 import { ToastProvider } from './components/ui/Toast';
 import { DashboardPage } from './pages/DashboardPage';
+import { ProductsPage } from './pages/ProductsPage';
 import { DevicesPage } from './pages/DevicesPage';
 import { LoginPage } from './pages/LoginPage';
 import { PinPage } from './pages/PinPage';
@@ -79,11 +80,24 @@ const devicesRoute = createRoute({
   ),
 });
 
+const productsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/produk',
+  component: () => (
+    <RequireAuth roles={['owner']}>
+      <AppShell>
+        <ProductsPage />
+      </AppShell>
+    </RequireAuth>
+  ),
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   registerRoute,
   pinRoute,
+  productsRoute,
   devicesRoute,
 ]);
 

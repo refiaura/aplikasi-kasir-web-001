@@ -120,3 +120,54 @@ Endpoint `POST /products/import` tercantum di PRD pada bagian impor/ekspor CSV
 `@fastify/multipart` v8 dan `@fastify/static` v7 hanya mendukung Fastify 4
 (gagal di `checkVersion` fastify-plugin). Dinaikkan ke multipart v9 / static v8.
 `@fastify/static` mewajibkan `root` absolut → `config.uploadDir` selalu di-`resolve()`.
+
+## D20 — Nomor struk per toko per hari
+
+`INV-YYYYMMDD-NNNN` via tabel `receipt_counters(store_id, date, last_no)` dengan
+upsert atomik (`ON CONFLICT ... DO UPDATE`), aman dari duplikat saat dua kasir
+jual bersamaan. Tanggal memakai zona Asia/Jakarta (default zona toko, PRD §7).
+
+## D21 — Persetujuan diskon oleh pemilik
+
+PRD menyebut "PIN pemilik" untuk persetujuan, tetapi pemilik di sistem ini tidak
+punya PIN (hanya kata sandi). Diimplementasikan sebagai `approvalPassword` di
+payload `POST /sales`: diverifikasi Argon2 terhadap pemilik toko yang aktif,
+tidak pernah disimpan. Kasir dengan `permissions.discount` tidak perlu ini.
+
+## D22 — Penjualan hanya oleh kasir berperangkat
+
+`POST /sales` mewajibkan sesi kasir dengan `device_id` dan shift terbuka di
+perangkat itu (`sessions.device_id` ditambahkan di migrasi 0002). Pemilik tidak
+punya shift/perangkat sehingga tidak berjualan di Fase 3; riwayat penjualan
+pemilik mencakup semua perangkat.
+
+## D23 — Stok dikurangi atomik, boleh minus
+
+Pengurangan stok memakai `stock_qty = stock_qty - qty` di SQL (tidak ada lost
+update saat konkurensi). Stok boleh minus sementara sesuai PRD §7 (offline);
+dashboard menandai produk minus di fase berikutnya.
+
+## D24 — Pesanan tersimpan (open bill) lokal per perangkat
+
+`openBills` disimpan di Dexie per perangkat, bukan di server — cukup untuk
+kebutuhan "simpan pesanan" Fase 3 tanpa sinkronisasi antar-perangkat.
+
+## D25 — QRIS statis ditunda
+
+Metode `qris`/`transfer` memakai nomor referensi manual. Konfigurasi gambar/teks
+QRIS statis per toko ditunda ke fase berikutnya.
+
+## D26 — Kasbon & void di luar Fase 3
+
+Metode `kasbon` ditolak API (400) hingga Fase 4; void/refund juga Fase 4.
+
+## D27 — Scan barcode via kolom cari
+
+Scanner USB bertindak sebagai keyboard (keyboard wedge) sehingga cukup diketik
+di kolom pencarian kasir; integrasi kamera ditunda ke Fase 5.
+
+## D28 — CORS hanya bila CORS_ORIGIN diisi
+
+API tidak mengaktifkan CORS secara default; diaktifkan via env `CORS_ORIGIN`
+untuk E2E CI (web :5173 memanggil API :8080). Di Docker production, nginx
+memproksi `/api` sehingga tidak perlu CORS.

@@ -25,6 +25,7 @@ export default defineConfig({
           process.env.E2E_DATABASE_URL ?? 'postgres://kasir:kasir@localhost:5432/kasir_e2e',
         SESSION_SECRET: 'e2e-test-secret-minimal-32-karakter-aman',
         PORT: '8080',
+        CORS_ORIGIN: 'http://localhost:5173',
       },
     },
     {

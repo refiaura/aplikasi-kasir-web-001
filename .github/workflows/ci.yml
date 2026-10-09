@@ -57,3 +57,49 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: kasir
+          POSTGRES_PASSWORD: kasir
+          POSTGRES_DB: kasir_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      E2E_DATABASE_URL: postgres://kasir:kasir@localhost:5432/kasir_e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.34.6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependensi
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser Playwright
+        run: pnpm --filter @kasir/web exec playwright install chromium --with-deps
+
+      - name: Migrasi database e2e
+        run: pnpm db:migrate
+        env:
+          DATABASE_URL: postgres://kasir:kasir@localhost:5432/kasir_e2e
+
+      - name: E2E Playwright
+        run: pnpm --filter @kasir/web e2e
+        env:
+          CI: 'true'

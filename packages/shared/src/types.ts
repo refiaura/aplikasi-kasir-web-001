@@ -209,3 +209,23 @@ export interface DailyOmzet {
   omzet: number;
   transaksi: number;
 }
+
+/** Delta sinkronisasi katalog offline. */
+export interface SyncDelta {
+  now: string;
+  products: {
+    id: string;
+    name: string;
+    sku: string | null;
+    barcode: string | null;
+    price: number;
+    cost: number;
+    unit: string;
+    categoryId: string | null;
+    isActive: boolean;
+    trackStock: boolean;
+    updatedAt: string;
+  }[];
+  categories: { id: string; name: string; updatedAt: string }[];
+  customers: { id: string; name: string; phone: string | null; updatedAt: string }[];
+}

@@ -17,6 +17,7 @@ import { reportRoutes } from './routes/reports.js';
 import { saleRoutes } from './routes/sales.js';
 import { shiftRoutes } from './routes/shifts.js';
 import { stockRoutes } from './routes/stock.js';
+import { syncRoutes } from './routes/sync.js';
 import { uploadRoutes } from './routes/uploads.js';
 import { userRoutes } from './routes/users.js';
 
@@ -68,6 +69,7 @@ export function buildApp(opts?: BuildAppOptions) {
       await api.register(saleRoutes);
       await api.register(customerRoutes);
       await api.register(reportRoutes);
+      await api.register(syncRoutes);
       await api.register(uploadRoutes);
       await api.register(dashboardRoutes);
     },

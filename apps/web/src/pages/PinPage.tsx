@@ -21,6 +21,12 @@ export function PinPage() {
     setSubmitting(true);
     try {
       await post('/auth/pin', { deviceCode: deviceCode.trim(), pin });
+      // Simpan kode perangkat untuk nomor nota lokal saat offline (Fase 5).
+      try {
+        localStorage.setItem('kasir-device-code', deviceCode.trim().toUpperCase());
+      } catch {
+        // Abaikan: penyimpanan lokal tidak tersedia.
+      }
       await fetchMe();
       void navigate({ to: '/' });
     } catch (e) {

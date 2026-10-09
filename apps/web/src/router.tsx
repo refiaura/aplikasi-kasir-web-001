@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router';
 import { AppShell } from './components/AppShell';
 import { GuestOnly, RequireAuth } from './components/guards';
+import { InstallPrompt } from './components/InstallPrompt';
 import { ToastProvider } from './components/ui/Toast';
 import { DashboardPage } from './pages/DashboardPage';
 import { KasirPage } from './pages/KasirPage';
@@ -27,6 +28,7 @@ const rootRoute = createRootRoute({
   component: () => (
     <ToastProvider>
       <Outlet />
+      <InstallPrompt />
     </ToastProvider>
   ),
 });

@@ -1,6 +1,9 @@
 import type { Sale } from '@kasir/shared';
+import { useState } from 'react';
 import { formatRupiah } from '../ui/MoneyText';
 import { useSessionStore } from '../../stores/session';
+import { getFavoritePrinter, isBluetoothSupported, pairPrinter, printReceipt } from '../../lib/printer';
+import { useToast } from '../ui/Toast';
 import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 
@@ -37,9 +40,32 @@ export function ReceiptDialog({
   onClose: () => void;
 }) {
   const store = useSessionStore((s) => s.store);
+  const toast = useToast();
+  const [printing, setPrinting] = useState(false);
   if (!sale) return null;
   const text = receiptText(sale, store?.name ?? 'Toko');
   const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  const favoritePrinter = getFavoritePrinter();
+
+  const handleThermalPrint = async () => {
+    setPrinting(true);
+    try {
+      if (!favoritePrinter) {
+        const name = await pairPrinter();
+        toast({ kind: 'success', title: 'Printer terhubung', desc: name });
+      }
+      await printReceipt({ storeName: store?.name ?? 'Toko', sale });
+      toast({ kind: 'success', title: 'Struk dikirim ke printer' });
+    } catch (e) {
+      toast({
+        kind: 'error',
+        title: 'Gagal mencetak',
+        desc: e instanceof Error ? e.message : 'Tidak dapat menghubungi printer.',
+      });
+    } finally {
+      setPrinting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -87,6 +113,11 @@ export function ReceiptDialog({
           <Button variant="secondary" className="flex-1" onClick={() => window.print()}>
             Cetak
           </Button>
+          {isBluetoothSupported() && (
+            <Button variant="secondary" className="flex-1" disabled={printing} onClick={handleThermalPrint}>
+              {printing ? '…' : favoritePrinter ? 'Thermal' : 'Pair printer'}
+            </Button>
+          )}
           <a
             href={waUrl}
             target="_blank"

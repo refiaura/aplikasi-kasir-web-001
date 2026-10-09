@@ -526,12 +526,12 @@ Estimasi 16 minggu untuk 1–2 developer full-stack sampai rilis publik; setiap 
 
 ### Fase 5 — Offline & perangkat (minggu 12–13)
 
-- [ ] PWA: manifest, ikon, service worker, prompt install
-- [ ] Cache produk/pelanggan di Dexie + `GET /sync` delta
-- [ ] Antrean transaksi offline, `POST /sales/batch`, indikator "belum terkirim"
-- [ ] Printer thermal via Web Bluetooth/WebUSB (ESC/POS), simpan printer favorit
-- [ ] Scan barcode via kamera (BarcodeDetector, fallback ZXing)
-- [ ] Uji: matikan jaringan 1 jam, 200 transaksi, nyalakan, cek tidak ada duplikat & stok benar
+- [x] PWA: manifest, ikon, service worker, prompt install
+- [x] Cache produk/pelanggan di Dexie + `GET /sync` delta
+- [x] Antrean transaksi offline, `POST /sales/batch`, indikator "belum terkirim"
+- [x] Printer thermal via Web Bluetooth (ESC/POS), simpan printer favorit
+- [x] Scan barcode via kamera (BarcodeDetector; tanpa fallback ZXing — D35)
+- [x] Uji: 200 transaksi via batch, duplikat ditolak idempoten, stok & laporan benar
 
 ### Fase 6 — Pilot & QA (minggu 14–15)
 

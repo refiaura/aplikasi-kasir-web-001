@@ -126,6 +126,7 @@ export const categories = pgTable(
     name: text('name').notNull(),
     sortOrder: integer('sort_order').default(0).notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
     unique('categories_store_name_unique').on(t.storeId, t.name),

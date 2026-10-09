@@ -203,3 +203,25 @@ mendukungnya bila dibutuhkan.
 Filter tanggal dan pengelompokan harian dihitung dalam zona Asia/Jakarta
 (`AT TIME ZONE 'Asia/Jakarta'`), bukan UTC. Transaksi void dikecualikan dari
 semua laporan.
+
+## D34 — Kasbon offline diantrekan, divalidasi saat terkirim
+
+Transaksi kasbon boleh masuk antrean offline; server memvalidasi pelanggan
+saat batch dikirim. Bila gagal (mis. pelanggan dihapus), item bertahan di
+antrean dengan pesan error untuk dicoba lagi.
+
+## D35 — Scan kamera tanpa fallback ZXing
+
+Scan barcode memakai BarcodeDetector bawaan Chromium. Bila browser tidak
+mendukung, pengguna tetap bisa ketik kode manual atau pakai scanner USB
+(keyboard wedge, D27) — tanpa menambah dependensi ZXing.
+
+## D36 — Konflik katalog: server menang
+
+`GET /sync?since=` mengembalikan delta berdasarkan `updated_at`; klien
+menimpa cache lokal dengan data server tanpa merge.
+
+## D37 — client_txn_id memakai UUID v7
+
+Sesuai PRD, ID transaksi klien memakai UUID v7 (timestamp + acak) agar
+terurut waktu dan tetap unik untuk idempotensi.

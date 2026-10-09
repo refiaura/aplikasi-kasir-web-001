@@ -1,7 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Category, Product, Sale, SalePayment, Shift } from '@kasir/shared';
-import { Minus, Plus, Search, ShoppingCart, Trash2 } from 'lucide-react';
+import type { Category, Product, Sale, Shift, SyncDelta } from '@kasir/shared';
+import type { SaleCreateInput } from '@kasir/shared';
+import { uuidv7 } from '@kasir/shared';
+import { Minus, Plus, ScanBarcode, Search, ShoppingCart, Trash2, WifiOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { BarcodeScanDialog } from '../components/kasir/BarcodeScanDialog';
 import { CashMovementDialog } from '../components/kasir/CashMovementDialog';
 import { DiscountDialog } from '../components/kasir/DiscountDialog';
 import { OpenBillsDialog } from '../components/kasir/OpenBillsDialog';
@@ -14,6 +17,7 @@ import { MoneyText } from '../components/ui/MoneyText';
 import { useToast } from '../components/ui/Toast';
 import { ApiRequestError, get, post } from '../lib/api';
 import { cn } from '../lib/cn';
+import { flushOutbox, pendingOutboxCount, queueOfflineSale, syncCatalog } from '../lib/db';
 import { formatRupiah } from '../components/ui/MoneyText';
 import { useCart } from '../stores/cart';
 
@@ -151,6 +155,51 @@ export function KasirPage() {
   const [cashMoveOpen, setCashMoveOpen] = useState(false);
   const [receiptSale, setReceiptSale] = useState<Sale | null>(null);
   const [paying, setPaying] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+  const [online, setOnline] = useState(() => navigator.onLine);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Sinkronisasi katalog + kirim antrean saat online kembali (Fase 5).
+  useEffect(() => {
+    let cancelled = false;
+    const refreshPending = () => {
+      void pendingOutboxCount().then((n) => {
+        if (!cancelled) setPendingCount(n);
+      });
+    };
+    const goOnline = async () => {
+      setOnline(true);
+      try {
+        await syncCatalog((since) =>
+          get<SyncDelta>(`/sync${since ? `?since=${encodeURIComponent(since)}` : ''}`),
+        );
+      } catch {
+        // Abaikan: katalog tetap dari cache.
+      }
+      try {
+        const { sent, failed } = await flushOutbox(async (sales) => {
+          const res = await post<{ results: { clientTxnId: string; ok: boolean; duplicate?: boolean; error?: string }[] }>('/sales/batch', { sales });
+          return res.results;
+        });
+        if (sent > 0) toast({ kind: 'success', title: `${sent} transaksi terkirim` });
+        if (failed > 0) toast({ kind: 'error', title: `${failed} transaksi gagal`, desc: 'Periksa koneksi lalu coba lagi.' });
+      } catch {
+        // Tetap di antrean; coba lagi nanti.
+      }
+      refreshPending();
+    };
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    refreshPending();
+    // Sinkron awal saat halaman dibuka.
+    if (navigator.onLine) void goOnline();
+    return () => {
+      cancelled = true;
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, [toast]);
 
   const cartCount = useCart((s) => s.count)();
   const cartTotal = useCart((s) => s.total)();
@@ -180,26 +229,37 @@ export function KasirPage() {
 
   const refreshShift = () => void queryClient.invalidateQueries({ queryKey: ['shift-current'] });
 
-  const checkout = async (payments: SalePayment[], customerId?: string) => {
+  const checkout = async (payments: SaleCreateInput['payments'], customerId?: string) => {
     const s = useCart.getState();
     setPaying(true);
+    const payload = {
+      clientTxnId: uuidv7(),
+      items: s.items.map((i) => ({
+        productId: i.productId,
+        qty: i.qty,
+        discountRp: i.discountRp,
+        discountPct: i.discountPct,
+        note: i.note,
+      })),
+      payments,
+      customerId,
+      discountRp: s.discountRp,
+      discountPct: s.discountPct,
+      clientTotal: s.total(),
+      approvalPassword: s.approvalPassword ?? undefined,
+    };
     try {
-      const res = await post<{ sale: Sale }>('/sales', {
-        clientTxnId: crypto.randomUUID(),
-        items: s.items.map((i) => ({
-          productId: i.productId,
-          qty: i.qty,
-          discountRp: i.discountRp,
-          discountPct: i.discountPct,
-          note: i.note,
-        })),
-        payments,
-        customerId,
-        discountRp: s.discountRp,
-        discountPct: s.discountPct,
-        clientTotal: s.total(),
-        approvalPassword: s.approvalPassword ?? undefined,
-      });
+      if (!navigator.onLine) {
+        // Offline: masuk antrean, kirim saat online kembali (Fase 5).
+        const queued = await queueOfflineSale(payload);
+        clearCart();
+        setPayOpen(false);
+        setCartOpen(false);
+        setPendingCount((n) => n + 1);
+        toast({ kind: 'success', title: 'Tersimpan offline', desc: `Nota ${queued.localReceiptNo} — terkirim otomatis saat online.` });
+        return;
+      }
+      const res = await post<{ sale: Sale }>('/sales', payload);
       clearCart();
       setPayOpen(false);
       setCartOpen(false);
@@ -221,6 +281,25 @@ export function KasirPage() {
 
   return (
     <div className="space-y-4">
+      {/* Status offline + antrean (Fase 5) */}
+      {(!online || pendingCount > 0) && (
+        <div
+          className="flex items-center gap-2 rounded-[14px] border border-kunyit-500 bg-kunyit-50 p-3 text-sm font-semibold"
+          role="status"
+        >
+          <WifiOff size={18} />
+          {!online ? (
+            <span>Offline — transaksi disimpan di perangkat.</span>
+          ) : (
+            <span>Mengirim antrean…</span>
+          )}
+          {pendingCount > 0 && (
+            <span className="ml-auto rounded-[999px] bg-kunyit-500 px-3 py-1 text-xs font-extrabold text-white tabular-nums">
+              {pendingCount} belum terkirim
+            </span>
+          )}
+        </div>
+      )}
       {/* Bilah shift */}
       {shiftQuery.isLoading ? (
         <div className="skeleton h-16" />
@@ -258,17 +337,28 @@ export function KasirPage() {
         <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
           {/* Kiri: produk */}
           <section className="space-y-3">
-            <label className="relative block">
-              <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-tinta-muted" />
-              <input
-                type="search"
+            <div className="flex gap-2">
+              <label className="relative block flex-1">
+                <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-tinta-muted" />
+                <input
+                  type="search"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Cari produk atau scan barcode…"
                 aria-label="Cari produk"
                 className="h-12 w-full rounded-[10px] border border-garis bg-surface pl-11 pr-4 text-base placeholder:text-tinta-muted focus:outline-2 focus:outline-pandan-600"
               />
-            </label>
+              </label>
+              <Button
+                variant="secondary"
+                aria-label="Pindai barcode"
+                title="Pindai barcode"
+                onClick={() => setScanOpen(true)}
+                className="h-12 w-12 shrink-0 !px-0"
+              >
+                <ScanBarcode size={20} />
+              </Button>
+            </div>
             <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Kategori">
               <button
                 type="button"
@@ -363,6 +453,14 @@ export function KasirPage() {
       />
       <PayDialog open={payOpen && !paying} total={cartTotal} onClose={() => setPayOpen(false)} onConfirm={checkout} />
       <ReceiptDialog open={receiptSale !== null} sale={receiptSale} onClose={() => setReceiptSale(null)} />
+      <BarcodeScanDialog
+        open={scanOpen}
+        onClose={() => setScanOpen(false)}
+        onScan={(code) => {
+          setScanOpen(false);
+          setQ(code);
+        }}
+      />
       <OpenBillsDialog open={billsOpen} onClose={() => setBillsOpen(false)} />
       {shift && (
         <CashMovementDialog

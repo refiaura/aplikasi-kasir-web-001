@@ -1,4 +1,4 @@
-import type { Customer, SalePayment } from '@kasir/shared';
+import type { Customer, SaleCreateInput } from '@kasir/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { get } from '../../lib/api';
@@ -8,7 +8,8 @@ import { Button } from '../ui/Button';
 import { Dialog, DialogContent } from '../ui/Dialog';
 import { Input } from '../ui/Input';
 
-type Method = 'cash' | 'qris' | 'transfer' | 'kasbon';
+type PaymentInput = SaleCreateInput['payments'][number];
+type Method = PaymentInput['method'];
 
 const TABS: { id: Method | 'split'; label: string }[] = [
   { id: 'cash', label: 'Tunai' },
@@ -43,7 +44,7 @@ export function PayDialog({
   open: boolean;
   total: number;
   onClose: () => void;
-  onConfirm: (payments: SalePayment[], customerId?: string) => void;
+  onConfirm: (payments: SaleCreateInput['payments'], customerId?: string) => void;
 }) {
   const [tab, setTab] = useState<Method | 'split'>('cash');
   const [cashReceived, setCashReceived] = useState('');
@@ -99,8 +100,8 @@ export function PayDialog({
         splitRows.map((r) => ({
           method: r.method,
           amount: Number.parseInt(r.amount || '0', 10) || 0,
-          cashReceived: r.method === 'cash' ? Number.parseInt(r.cashReceived || '0', 10) || 0 : null,
-          reference: r.method === 'cash' ? null : r.reference.trim() || null,
+          cashReceived: r.method === 'cash' ? Number.parseInt(r.cashReceived || '0', 10) || 0 : undefined,
+          reference: r.method === 'cash' ? undefined : r.reference.trim() || undefined,
         })),
       );
     } else if (tab === 'kasbon') {

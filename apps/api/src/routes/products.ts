@@ -236,7 +236,7 @@ export async function productRoutes(app: FastifyInstance) {
     if (data.isActive !== undefined) patch.isActive = data.isActive;
 
     if (Object.keys(patch).length > 0) {
-      await database.update(products).set(patch).where(eq(products.id, id));
+      await database.update(products).set({ ...patch, updatedAt: new Date() }).where(eq(products.id, id));
       await database.insert(auditLogs).values({
         storeId,
         userId: req.sessionUser!.userId,
@@ -258,7 +258,7 @@ export async function productRoutes(app: FastifyInstance) {
     const current = await findProduct(database, storeId, id);
     if (!current) return err.notFound(reply, 'Produk tidak ditemukan.');
 
-    await database.update(products).set({ isActive: false }).where(eq(products.id, id));
+    await database.update(products).set({ isActive: false, updatedAt: new Date() }).where(eq(products.id, id));
     await database.insert(auditLogs).values({
       storeId,
       userId: req.sessionUser!.userId,

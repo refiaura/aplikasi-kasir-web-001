@@ -78,7 +78,7 @@ export async function categoryRoutes(app: FastifyInstance) {
 
     const [updated] = await database
       .update(categories)
-      .set({ ...(parsed.data.name ? { name: parsed.data.name } : {}), ...(parsed.data.sortOrder !== undefined ? { sortOrder: parsed.data.sortOrder } : {}) })
+      .set({ ...(parsed.data.name ? { name: parsed.data.name } : {}), ...(parsed.data.sortOrder !== undefined ? { sortOrder: parsed.data.sortOrder } : {}), updatedAt: new Date() })
       .where(eq(categories.id, id))
       .returning(selectCols);
     return reply.send({ category: updated });

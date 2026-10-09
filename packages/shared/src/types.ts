@@ -44,3 +44,42 @@ export interface DashboardSummary {
   stokMenipis: unknown[];
   stokMinus: unknown[];
 }
+
+/** Kategori produk. */
+export interface Category {
+  id: string;
+  name: string;
+  sortOrder: number;
+}
+
+/** Produk. price/cost integer rupiah; stockQty/minStock desimal (3 digit). */
+export interface Product {
+  id: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  name: string;
+  sku: string | null;
+  barcode: string | null;
+  unit: string;
+  price: number;
+  cost: number;
+  trackStock: boolean;
+  stockQty: number;
+  minStock: number;
+  imageUrl: string | null;
+  isActive: boolean;
+  lowStock: boolean;
+}
+
+/** Mutasi stok. */
+export interface StockMovement {
+  id: string;
+  productId: string;
+  productName: string;
+  type: string;
+  qty: number;
+  unitCost: number | null;
+  note: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
